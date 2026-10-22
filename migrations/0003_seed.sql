@@ -1,8 +1,6 @@
 -- Default platform settings and cancellation policies.
--- No listings and no password are seeded. The first signed-in account becomes
--- the operator unless NESTORA_ADMIN_EMAILS is set on the server.
--- scripts/seed.mjs can also create an operator when NESTORA_ADMIN_EMAIL and
--- NESTORA_ADMIN_PASSWORD are present and DATABASE_URL points at Postgres.
+-- No listings. The operator is the address in ADMIN_EMAIL (see scripts/seed.mjs).
+-- The first signed-in account is not promoted.
 
 insert into platform_lock (id, founder_user_id)
 values (1, null)

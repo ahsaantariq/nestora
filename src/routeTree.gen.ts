@@ -17,7 +17,10 @@ import { Route as ListRouteImport } from './routes/list'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StatusRouteImport } from './routes/status'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminBookingsRouteImport } from './routes/admin/bookings'
 import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
 import { Route as AdminFeesRouteImport } from './routes/admin/fees'
@@ -26,9 +29,12 @@ import { Route as AdminOwnersRouteImport } from './routes/admin/owners'
 import { Route as AdminPaymentsRouteImport } from './routes/admin/payments'
 import { Route as AdminPayoutsRouteImport } from './routes/admin/payouts'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as CheckoutBookingIdRouteImport } from './routes/checkout/$bookingId'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardBookingsRouteImport } from './routes/dashboard/bookings'
 import { Route as DashboardCardsRouteImport } from './routes/dashboard/cards'
+import { Route as DashboardNotificationsRouteImport } from './routes/dashboard/notifications'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard/profile'
 import { Route as DashboardSavedRouteImport } from './routes/dashboard/saved'
 import { Route as HostIndexRouteImport } from './routes/host/index'
@@ -41,7 +47,10 @@ import { Route as HostReviewsRouteImport } from './routes/host/reviews'
 import { Route as HostRoomsRouteImport } from './routes/host/rooms'
 import { Route as HostSettingsRouteImport } from './routes/host/settings'
 import { Route as StaySlugRouteImport } from './routes/stay/$slug'
+import { Route as TripsBookingIdRouteImport } from './routes/trips/$bookingId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as HostListingPropertyIdRouteImport } from './routes/host/listing/$propertyId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -83,9 +92,24 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatusRoute = StatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminBookingsRoute = AdminBookingsRouteImport.update({
@@ -128,6 +152,16 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutBookingIdRoute = CheckoutBookingIdRouteImport.update({
+  id: '/checkout/$bookingId',
+  path: '/checkout/$bookingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -141,6 +175,11 @@ const DashboardBookingsRoute = DashboardBookingsRouteImport.update({
 const DashboardCardsRoute = DashboardCardsRouteImport.update({
   id: '/cards',
   path: '/cards',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardNotificationsRoute = DashboardNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardProfileRoute = DashboardProfileRouteImport.update({
@@ -203,10 +242,25 @@ const StaySlugRoute = StaySlugRouteImport.update({
   path: '/stay/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TripsBookingIdRoute = TripsBookingIdRouteImport.update({
+  id: '/trips/$bookingId',
+  path: '/trips/$bookingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HostListingPropertyIdRoute = HostListingPropertyIdRouteImport.update({
+  id: '/listing/$propertyId',
+  path: '/listing/$propertyId',
+  getParentRoute: () => HostRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -218,6 +272,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/status': typeof StatusRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/fees': typeof AdminFeesRoute
@@ -226,8 +283,11 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/api/health': typeof ApiHealthRoute
+  '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/cards': typeof DashboardCardsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/saved': typeof DashboardSavedRoute
   '/host/bookings': typeof HostBookingsRoute
@@ -239,10 +299,13 @@ export interface FileRoutesByFullPath {
   '/host/rooms': typeof HostRoomsRoute
   '/host/settings': typeof HostSettingsRoute
   '/stay/$slug': typeof StaySlugRoute
+  '/trips/$bookingId': typeof TripsBookingIdRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/host/': typeof HostIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/host/listing/$propertyId': typeof HostListingPropertyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -250,6 +313,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/status': typeof StatusRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/fees': typeof AdminFeesRoute
@@ -258,8 +324,11 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/api/health': typeof ApiHealthRoute
+  '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/cards': typeof DashboardCardsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/saved': typeof DashboardSavedRoute
   '/host/bookings': typeof HostBookingsRoute
@@ -271,10 +340,13 @@ export interface FileRoutesByTo {
   '/host/rooms': typeof HostRoomsRoute
   '/host/settings': typeof HostSettingsRoute
   '/stay/$slug': typeof StaySlugRoute
+  '/trips/$bookingId': typeof TripsBookingIdRoute
   '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/host': typeof HostIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/host/listing/$propertyId': typeof HostListingPropertyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -286,6 +358,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/status': typeof StatusRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/fees': typeof AdminFeesRoute
@@ -294,8 +369,11 @@ export interface FileRoutesById {
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/api/health': typeof ApiHealthRoute
+  '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
   '/dashboard/cards': typeof DashboardCardsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/saved': typeof DashboardSavedRoute
   '/host/bookings': typeof HostBookingsRoute
@@ -307,10 +385,13 @@ export interface FileRoutesById {
   '/host/rooms': typeof HostRoomsRoute
   '/host/settings': typeof HostSettingsRoute
   '/stay/$slug': typeof StaySlugRoute
+  '/trips/$bookingId': typeof TripsBookingIdRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/host/': typeof HostIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/host/listing/$propertyId': typeof HostListingPropertyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -323,6 +404,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/search'
     | '/signup'
+    | '/sitemap.xml'
+    | '/status'
+    | '/admin/audit'
     | '/admin/bookings'
     | '/admin/customers'
     | '/admin/fees'
@@ -331,8 +415,11 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/reports'
+    | '/api/health'
+    | '/checkout/$bookingId'
     | '/dashboard/bookings'
     | '/dashboard/cards'
+    | '/dashboard/notifications'
     | '/dashboard/profile'
     | '/dashboard/saved'
     | '/host/bookings'
@@ -344,10 +431,13 @@ export interface FileRouteTypes {
     | '/host/rooms'
     | '/host/settings'
     | '/stay/$slug'
+    | '/trips/$bookingId'
     | '/admin/'
     | '/dashboard/'
     | '/host/'
     | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/host/listing/$propertyId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -355,6 +445,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/search'
     | '/signup'
+    | '/sitemap.xml'
+    | '/status'
+    | '/admin/audit'
     | '/admin/bookings'
     | '/admin/customers'
     | '/admin/fees'
@@ -363,8 +456,11 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/reports'
+    | '/api/health'
+    | '/checkout/$bookingId'
     | '/dashboard/bookings'
     | '/dashboard/cards'
+    | '/dashboard/notifications'
     | '/dashboard/profile'
     | '/dashboard/saved'
     | '/host/bookings'
@@ -376,10 +472,13 @@ export interface FileRouteTypes {
     | '/host/rooms'
     | '/host/settings'
     | '/stay/$slug'
+    | '/trips/$bookingId'
     | '/admin'
     | '/dashboard'
     | '/host'
     | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/host/listing/$propertyId'
   id:
     | '__root__'
     | '/'
@@ -390,6 +489,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/search'
     | '/signup'
+    | '/sitemap.xml'
+    | '/status'
+    | '/admin/audit'
     | '/admin/bookings'
     | '/admin/customers'
     | '/admin/fees'
@@ -398,8 +500,11 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/reports'
+    | '/api/health'
+    | '/checkout/$bookingId'
     | '/dashboard/bookings'
     | '/dashboard/cards'
+    | '/dashboard/notifications'
     | '/dashboard/profile'
     | '/dashboard/saved'
     | '/host/bookings'
@@ -411,10 +516,13 @@ export interface FileRouteTypes {
     | '/host/rooms'
     | '/host/settings'
     | '/stay/$slug'
+    | '/trips/$bookingId'
     | '/admin/'
     | '/dashboard/'
     | '/host/'
     | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/host/listing/$propertyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -426,8 +534,14 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StatusRoute: typeof StatusRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  CheckoutBookingIdRoute: typeof CheckoutBookingIdRoute
   StaySlugRoute: typeof StaySlugRoute
+  TripsBookingIdRoute: typeof TripsBookingIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -488,11 +602,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/bookings': {
@@ -551,6 +686,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/$bookingId': {
+      id: '/checkout/$bookingId'
+      path: '/checkout/$bookingId'
+      fullPath: '/checkout/$bookingId'
+      preLoaderRoute: typeof CheckoutBookingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -570,6 +719,13 @@ declare module '@tanstack/react-router' {
       path: '/cards'
       fullPath: '/dashboard/cards'
       preLoaderRoute: typeof DashboardCardsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/notifications': {
+      id: '/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications'
+      preLoaderRoute: typeof DashboardNotificationsRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/profile': {
@@ -656,6 +812,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trips/$bookingId': {
+      id: '/trips/$bookingId'
+      path: '/trips/$bookingId'
+      fullPath: '/trips/$bookingId'
+      preLoaderRoute: typeof TripsBookingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -663,10 +826,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/host/listing/$propertyId': {
+      id: '/host/listing/$propertyId'
+      path: '/listing/$propertyId'
+      fullPath: '/host/listing/$propertyId'
+      preLoaderRoute: typeof HostListingPropertyIdRouteImport
+      parentRoute: typeof HostRouteRoute
+    }
   }
 }
 
 interface AdminRouteRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminFeesRoute: typeof AdminFeesRoute
@@ -679,6 +857,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminFeesRoute: AdminFeesRoute,
@@ -697,6 +876,7 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 interface DashboardRouteRouteChildren {
   DashboardBookingsRoute: typeof DashboardBookingsRoute
   DashboardCardsRoute: typeof DashboardCardsRoute
+  DashboardNotificationsRoute: typeof DashboardNotificationsRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardSavedRoute: typeof DashboardSavedRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -705,6 +885,7 @@ interface DashboardRouteRouteChildren {
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardBookingsRoute: DashboardBookingsRoute,
   DashboardCardsRoute: DashboardCardsRoute,
+  DashboardNotificationsRoute: DashboardNotificationsRoute,
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardSavedRoute: DashboardSavedRoute,
   DashboardIndexRoute: DashboardIndexRoute,
@@ -724,6 +905,7 @@ interface HostRouteRouteChildren {
   HostRoomsRoute: typeof HostRoomsRoute
   HostSettingsRoute: typeof HostSettingsRoute
   HostIndexRoute: typeof HostIndexRoute
+  HostListingPropertyIdRoute: typeof HostListingPropertyIdRoute
 }
 
 const HostRouteRouteChildren: HostRouteRouteChildren = {
@@ -736,6 +918,7 @@ const HostRouteRouteChildren: HostRouteRouteChildren = {
   HostRoomsRoute: HostRoomsRoute,
   HostSettingsRoute: HostSettingsRoute,
   HostIndexRoute: HostIndexRoute,
+  HostListingPropertyIdRoute: HostListingPropertyIdRoute,
 }
 
 const HostRouteRouteWithChildren = HostRouteRoute._addFileChildren(
@@ -751,8 +934,14 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StatusRoute: StatusRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  CheckoutBookingIdRoute: CheckoutBookingIdRoute,
   StaySlugRoute: StaySlugRoute,
+  TripsBookingIdRoute: TripsBookingIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

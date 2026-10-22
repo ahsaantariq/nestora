@@ -53,7 +53,7 @@ function SignupPage() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
       <Wordmark />
       <h1 className="mt-8 font-display text-4xl">Create an account</h1>
-      <p className="mt-2 text-sm text-muted">You'll start as a guest. The first account on a new Nestora becomes the operator.</p>
+      <p className="mt-2 text-sm text-muted">You'll start as a guest. Only the address in ADMIN_EMAIL is an operator. Ask for the host desk if you want to list a space.</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <label className="block text-sm">
           <span className="mb-1.5 block font-medium">Name</span>

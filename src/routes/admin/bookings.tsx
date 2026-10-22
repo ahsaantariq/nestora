@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { loadAdminTables } from "@/lib/nestora/functions";
+import { cancelTrip, loadAdminTables, retryRefundFn } from "@/lib/nestora/functions";
 import { formatMoney } from "@/lib/domain/money";
 import { PageIntro } from "@/components/workspace";
-import { EmptyState, Skeleton, StatusPill } from "@/components/ui";
+import { EmptyState, Skeleton, StatusPill, Button } from "@/components/ui";
 
 export const Route = createFileRoute("/admin/bookings")({ component: AdminBookings });
 
@@ -19,7 +19,7 @@ function AdminBookings() {
   }, []);
   return (
     <>
-      <PageIntro title="Bookings" body="Every booking on Nestora. Cancelling from here, with the policy refund, comes with checkout." />
+      <PageIntro title="Bookings" body="Cancel from here to refund the original card under the stay's policy. A full refund is used for an operator cancellation. If Stripe fails, retry." />
       {error ? <EmptyState title="Bookings didn't load" body={error} /> : null}
       {!data && !error ? <Skeleton className="h-24" /> : null}
       {data && data.bookings.length === 0 ? <EmptyState title="No bookings" body="The bookings table is empty." /> : null}
@@ -30,7 +30,15 @@ function AdminBookings() {
               <p className="text-sm">{row.check_in} → {row.check_out}</p>
               <p className="tabular-nums">{formatMoney(row.total_cents)}</p>
             </div>
-            <StatusPill>{row.status.toLowerCase()}</StatusPill>
+            <div className="flex items-center gap-2">
+              <StatusPill>{row.status.toLowerCase()}</StatusPill>
+              {row.status === "CONFIRMED" || row.status === "PENDING" ? (
+                <Button variant="danger" onClick={() => cancelTrip({ data: { bookingId: row.id } }).then(() => loadAdminTables().then(setData)).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not cancel."))}>Cancel</Button>
+              ) : null}
+              {row.status === "CANCELLED" ? (
+                <Button variant="quiet" onClick={() => retryRefundFn({ data: { bookingId: row.id } }).then(() => loadAdminTables().then(setData)).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Refund retry failed."))}>Retry refund</Button>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>

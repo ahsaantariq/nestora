@@ -49,6 +49,9 @@ function BookingsPage() {
               <StatusPill>{row.status.toLowerCase()}</StatusPill>
             </div>
             <p className="mt-3 text-sm tabular-nums">{formatMoney(row.total_cents, row.currency.toUpperCase())}</p>
+            <Link to="/trips/$bookingId" params={{ bookingId: row.id }} className="mt-3 inline-flex text-sm font-medium text-primary">
+              Receipt and cancellation
+            </Link>
           </li>
         ))}
       </ul>

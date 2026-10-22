@@ -201,9 +201,7 @@ function SearchPage() {
               </label>
             </div>
             {search.view === "map" ? (
-              <div className="mb-4 rounded-card border border-line bg-surface p-6 text-sm text-muted">
-                Map pins appear when a live stay has a location. There is nothing to pin until a host is approved.
-              </div>
+              <MapSplit stays={stays ?? []} />
             ) : null}
             {stays == null && !error ? (
               <div className="space-y-3">
@@ -247,4 +245,25 @@ function SearchPage() {
 
 function labelFor(type: string) {
   return PROPERTY_TYPES.find((item) => item.id === type)?.label ?? type;
+}
+
+function MapSplit({ stays }: { stays: { title: string; city: string; lat: number | null; lng: number | null }[] }) {
+  const pinned = stays.filter((stay) => stay.lat != null && stay.lng != null);
+  const first = pinned[0];
+  if (!first || first.lat == null || first.lng == null) {
+    return (
+      <div className="mb-4 rounded-card border border-line bg-surface p-6 text-sm text-muted">
+        Map pins appear when a live stay has a latitude and longitude. Nothing in this result has a pin yet.
+      </div>
+    );
+  }
+  const token = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
+  const src = token
+    ? `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+e36f47(${first.lng},${first.lat})/${first.lng},${first.lat},11,0/800x360?access_token=${token}`
+    : `https://www.openstreetmap.org/export/embed.html?bbox=${first.lng - 0.2}%2C${first.lat - 0.12}%2C${first.lng + 0.2}%2C${first.lat + 0.12}&layer=mapnik&marker=${first.lat}%2C${first.lng}`;
+  return token ? (
+    <img src={src} alt={`Map near ${first.city || first.title}`} className="mb-4 h-72 w-full rounded-card object-cover" />
+  ) : (
+    <iframe title="Search map" src={src} className="mb-4 h-72 w-full rounded-card border border-line" />
+  );
 }

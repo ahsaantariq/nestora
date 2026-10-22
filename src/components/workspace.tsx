@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, type LinkProps } from "@tanstack/react-router";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import type { Role } from "@/lib/nestora/constants";
@@ -102,7 +102,7 @@ export function DeskLink({
   children,
   exact,
 }: {
-  to: "/" | "/dashboard" | "/dashboard/bookings" | "/dashboard/cards" | "/dashboard/saved" | "/dashboard/profile" | "/host" | "/host/properties" | "/host/rooms" | "/host/calendar" | "/host/bookings" | "/host/payouts" | "/host/fees" | "/host/reviews" | "/host/settings" | "/admin" | "/admin/listings" | "/admin/owners" | "/admin/customers" | "/admin/bookings" | "/admin/payments" | "/admin/payouts" | "/admin/fees" | "/admin/reports";
+  to: LinkProps["to"];
   children: ReactNode;
   exact?: boolean;
 }) {

@@ -44,9 +44,9 @@ function ListPage() {
   } else if (profile?.role === "ADMIN" || profile?.role === "OWNER" || profile?.ownerStatus === "APPROVED") {
     body = (
       <div className="space-y-4">
-        <p className="text-sm text-muted">Your host desk is open. The listing form is the next piece of Nestora — the desk is ready for it.</p>
-        <Link to="/host" className="inline-flex h-11 items-center rounded-button bg-primary px-4 text-sm font-medium text-surface">
-          Open the host desk
+        <p className="text-sm text-muted">Your host desk is open. Draft a space, then send it for review. Nothing goes live until an operator approves it.</p>
+        <Link to="/host/listing/$propertyId" params={{ propertyId: "new" }} className="inline-flex h-11 items-center rounded-button bg-primary px-4 text-sm font-medium text-surface">
+          Start a listing
         </Link>
       </div>
     );

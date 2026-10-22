@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PROPERTY_TYPES } from "@/lib/nestora/constants";
-import { listFeatured } from "@/lib/nestora/functions";
+import { listFeatured, loadDestinations } from "@/lib/nestora/functions";
 import type { StayCard } from "@/lib/nestora/data.server";
 import { formatMoney } from "@/lib/domain/money";
 import { PublicFrame } from "@/components/site-chrome";
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
   const [stays, setStays] = useState<StayCard[] | null>(null);
+  const [places, setPlaces] = useState<Awaited<ReturnType<typeof loadDestinations>> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,6 +24,9 @@ function Home() {
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not load stays.");
       });
+    loadDestinations()
+      .then((rows) => { if (!cancelled) setPlaces(rows); })
+      .catch(() => { if (!cancelled) setPlaces([]); });
     return () => {
       cancelled = true;
     };
@@ -108,6 +112,58 @@ function Home() {
             </div>
           ) : null}
         </div>
+      </section>
+
+      <section className="mx-auto mt-16 max-w-6xl px-4">
+        <h2 className="font-display text-3xl">Places with a live stay</h2>
+        {places && places.length === 0 ? (
+          <p className="mt-3 max-w-xl text-sm text-muted">Cities show up here only after a listing in that city is approved. Nothing is invented.</p>
+        ) : null}
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          {places?.map((place) => (
+            <Link key={`${place.city}-${place.country}`} to="/search" search={{ location: place.city }} className="rounded-card bg-surface p-5 shadow-soft">
+              <h3 className="font-display text-2xl">{place.city}</h3>
+              <p className="mt-1 text-sm text-muted">{place.country} · {place.stays} {place.stays === 1 ? "stay" : "stays"}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto mt-16 grid max-w-6xl gap-6 px-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-card bg-primary p-8 text-surface">
+          <h2 className="font-display text-4xl">List your space</h2>
+          <p className="mt-3 max-w-md text-surface/85">Hosts draft the place, the price, and the rules. An operator approves it before it can be booked.</p>
+          <Link to="/list" className="mt-6 inline-flex h-11 items-center rounded-button bg-surface px-4 text-sm font-medium text-primary">Start a listing</Link>
+        </div>
+        <div className="space-y-4">
+          {[
+            ["Approved before it is public", "A listing stays a draft until an operator says it can go live."],
+            ["The price is the price", "Nightly total, fees, and tax are shown before anyone pays."],
+            ["Cards stay with the card network", "Nestora never stores a card number."],
+          ].map(([title, body]) => (
+            <article key={title} className="rounded-card bg-surface p-5 shadow-soft">
+              <h3 className="font-display text-xl">{title}</h3>
+              <p className="mt-2 text-sm text-muted">{body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto mt-16 max-w-6xl px-4">
+        <h2 className="font-display text-3xl">Questions</h2>
+        <dl className="mt-6 grid gap-4 md:grid-cols-2">
+          {[
+            ["Who becomes the operator?", "Only the email in ADMIN_EMAIL. Signing up first does not make you an operator."],
+            ["When can I review a stay?", "After that booking is marked completed. The host can reply. An operator can hide a review."],
+            ["What if I cancel?", "The stay's policy (Flexible, Moderate, or Strict) decides the refund before you confirm."],
+            ["Where do photos go?", "Cloudinary, when those keys are set. Otherwise a host can attach an https address."],
+          ].map(([question, answer]) => (
+            <div key={question} className="border-t border-line pt-4">
+              <dt className="font-medium">{question}</dt>
+              <dd className="mt-2 text-sm text-muted">{answer}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <section className="mx-auto mt-16 grid max-w-6xl gap-6 px-4 md:grid-cols-3">

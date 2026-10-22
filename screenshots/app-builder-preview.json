@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Nestora",
+      "hasCanvas": false,
+      "bodyTextLen": 2104,
+      "bodyTextHash": "6276b4225c2e3db1bc624d16d019e479fff6b63b064205ad233a3c6bd94c6266",
+      "bodyTextPrefix": "Skip to content Nestora Stays List your space A marketplace for ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Nestora",
+      "hasCanvas": false,
+      "bodyTextLen": 1931,
+      "bodyTextHash": "49e622aa7820fcbe328433c785d27bb651c13aceccfb28225863bd474dacd504",
+      "bodyTextPrefix": "Skip to content Nestora A marketplace for real rooms Find your s",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}

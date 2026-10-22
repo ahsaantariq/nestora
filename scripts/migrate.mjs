@@ -1,90 +1,53 @@
 #!/usr/bin/env node
 /**
- * Deploy-time database migrator (node-postgres, `pg`).
+ * Versioned schema sync for any Postgres that speaks the wire protocol.
+ * Uses DIRECT_URL when set, otherwise DATABASE_URL. Each file runs once,
+ * inside a transaction, and is recorded in `_migrations`. Nothing is dropped.
  *
- * Runs during `npm run build` — on every Vercel deploy — applying pending files
- * in ../migrations to DATABASE_URL. Each file is applied in one transaction and
- * recorded in a `_migrations` table, so it runs once and is safe to re-run.
- *
- * The read is non-recursive, so the opt-in auth schema under migrations/auth/
- * is not applied to an app that never asked for sign-in.
- *
- * No DATABASE_URL (local / preview builds) -> skip; the PGLite fallback applies
- * the same files at startup instead (see src/lib/db.ts).
+ * No URL (sandbox preview) -> skip. PGLite applies the same files on startup.
  */
 import { readdir, readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import pg from "pg";
-import { pendingMigrations } from "./migration-plan.mjs";
-
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  console.log(
-    "[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).",
-  );
-  process.exit(0);
-}
+import { fileURLToPath } from "node:url";
+import { applySqlMigrations } from "./apply-migrations.mjs";
+import { connectionAdvice, readDbUrls } from "./pg-target.mjs";
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
-async function main() {
+export async function runMigrate() {
+  const { migrationUrl, directUrl } = readDbUrls();
+  if (!migrationUrl) {
+    console.log("[migrate] DATABASE_URL and DIRECT_URL are unset — skipping (PGLite migrates itself).");
+    return 0;
+  }
+  if (!directUrl) {
+    console.log("[migrate] DIRECT_URL is unset — using DATABASE_URL for schema sync.");
+  }
   let entries;
   try {
     entries = await readdir(migrationsDir);
   } catch {
     console.log("[migrate] no migrations/ directory — nothing to do.");
-    return;
+    return 0;
   }
-  // An app with no schema of its own must not pay for a database connection.
-  if (pendingMigrations(entries, []).length === 0) {
+  const files = [];
+  for (const name of entries) {
+    if (!name.endsWith(".sql")) continue;
+    files.push({ name, sql: await readFile(join(migrationsDir, name), "utf8") });
+  }
+  if (files.length === 0) {
     console.log("[migrate] no migrations — nothing to do.");
-    return;
+    return 0;
   }
-
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
-  const client = await pool.connect();
-  try {
-    await client.query(
-      "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
-    );
-    const applied = (await client.query("SELECT name FROM _migrations")).rows.map(
-      (r) => r.name,
-    );
-
-    let count = 0;
-    for (const { name } of pendingMigrations(entries, applied)) {
-      const text = await readFile(join(migrationsDir, name), "utf8");
-      try {
-        await client.query("BEGIN");
-        // pg's simple-query protocol runs a whole multi-statement file at once.
-        await client.query(text);
-        await client.query("INSERT INTO _migrations (name) VALUES ($1)", [name]);
-        await client.query("COMMIT");
-      } catch (err) {
-        console.error(`[migrate] error applying ${name}`);
-        try {
-          await client.query("ROLLBACK");
-        } catch {
-          // ROLLBACK fails when the connection died — keep the original error.
-        }
-        throw err;
-      }
-      console.log(`[migrate] applied ${name}`);
-      count += 1;
-    }
-    console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
-  } finally {
-    client.release();
-    await pool.end();
-  }
+  return applySqlMigrations({ connectionString: migrationUrl, files });
 }
 
-main().catch((err) => {
-  console.error("[migrate] failed:", err?.message || err);
-  // pg errors carry the context needed to debug a bad SQL file.
-  for (const key of ["code", "detail", "hint", "position", "where"]) {
-    if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
-  }
-  process.exit(1);
-});
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) {
+  runMigrate().catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[migrate] failed:", message);
+    console.error("[migrate] fix:", connectionAdvice(message, readDbUrls().migrationUrl));
+    process.exit(1);
+  });
+}

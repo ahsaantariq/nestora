@@ -1,5 +1,6 @@
 import { getSql } from "@/lib/db";
 import { AMENITIES, type PropertyType, type Role } from "./constants.ts";
+import { adminEmailsFromEnv, roleAfterSignIn } from "./admin-email.ts";
 import { ownerNet } from "@/lib/domain/pricing.ts";
 
 const AMENITY_SET = new Set<string>(AMENITIES);
@@ -57,6 +58,8 @@ export type StayCard = {
   avgRating: number;
   reviewCount: number;
   coverUrl: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 export type SearchInput = {
@@ -147,30 +150,18 @@ export async function loadOrCreateProfile(userId: string): Promise<Profile> {
     on conflict (user_id) do nothing
   `;
 
-  const configured = (process.env.NESTORA_ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-  if (configured.length > 0) {
-    if (configured.includes(user.email.toLowerCase())) {
-      await sql`
-        update profiles set role = 'ADMIN', updated_at = now()
-        where user_id = ${userId} and role <> 'ADMIN'
-      `;
-    }
-  } else {
-    const won = await sql<{ founder_user_id: string }>`
-      update platform_lock
-      set founder_user_id = ${userId}
-      where id = 1 and founder_user_id is null
-      returning founder_user_id
+  const current = await readProfile(userId);
+  const nextRole = roleAfterSignIn({
+    email: user.email,
+    currentRole: current.role,
+    ownerStatus: current.ownerStatus,
+    adminEmails: adminEmailsFromEnv(process.env),
+  });
+  if (nextRole !== current.role) {
+    await sql`
+      update profiles set role = ${nextRole}, updated_at = now()
+      where user_id = ${userId}
     `;
-    if (won.length > 0) {
-      await sql`
-        update profiles set role = 'ADMIN', updated_at = now() where user_id = ${userId}
-      `;
-    }
   }
 
   return readProfile(userId);
@@ -314,6 +305,8 @@ type CardRow = {
   avg_rating: number;
   review_count: number;
   cover_url: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 function mapCard(row: CardRow): StayCard {
@@ -339,6 +332,8 @@ function mapCard(row: CardRow): StayCard {
     avgRating: Number(row.avg_rating) || 0,
     reviewCount: row.review_count,
     coverUrl: row.cover_url,
+    lat: row.lat == null ? null : Number(row.lat),
+    lng: row.lng == null ? null : Number(row.lng),
   };
 }
 
@@ -381,14 +376,12 @@ export async function searchStays(input: SearchInput): Promise<StayCard[]> {
   const text = `
     select p.id, p.slug, p.title, p.property_type, p.city, p.region, p.country,
            p.summary, p.nightly_cents, p.max_guests, p.bedrooms, p.instant_book,
-           p.pets_allowed,
+           p.pets_allowed, p.lat, p.lng,
            coalesce(rv.avg_rating, 0)::float8 as avg_rating,
            coalesce(rv.review_count, 0)::int as review_count,
-           (
-             select m.url from property_media m
-             where m.property_id = p.id and m.kind = 'IMAGE'
-             order by m.sort_order asc, m.created_at asc
-             limit 1
+           coalesce(
+             (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' and m.is_cover order by m.sort_order asc limit 1),
+             (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' order by m.sort_order asc, m.created_at asc limit 1)
            ) as cover_url
     from properties p
     left join (
@@ -396,6 +389,7 @@ export async function searchStays(input: SearchInput): Promise<StayCard[]> {
              avg(rating)::float8 as avg_rating,
              count(*)::int as review_count
       from reviews
+      where hidden = false
       group by property_id
     ) rv on rv.property_id = p.id
     where ${where.join(" and ")}
@@ -502,10 +496,7 @@ export async function adminSummary(userId: string) {
       (select count(*)::int from profiles where owner_status = 'PENDING') as pending_owners,
       (select count(*)::int from profiles where role = 'CUSTOMER') as customers
   `;
-  const founder = await sql<{ founder_user_id: string | null }>`
-    select founder_user_id from platform_lock where id = 1
-  `;
-  return { ...rows[0]!, founderUserId: founder[0]?.founder_user_id ?? null };
+  return { ...rows[0]! };
 }
 
 export type PersonRow = {
@@ -636,7 +627,11 @@ export async function listSavedStays(userId: string) {
   const rows = await sql<CardRow>`
     select p.id, p.slug, p.title, p.property_type, p.city, p.region, p.country,
            p.summary, p.nightly_cents, p.max_guests, p.bedrooms, p.instant_book,
-           p.pets_allowed, 0::float8 as avg_rating, 0::int as review_count, null::text as cover_url
+           p.pets_allowed, p.lat, p.lng, 0::float8 as avg_rating, 0::int as review_count,
+           coalesce(
+             (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' and m.is_cover order by m.sort_order limit 1),
+             (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' order by m.sort_order limit 1)
+           ) as cover_url
     from saved_properties s
     join properties p on p.id = s.property_id
     where s.user_id = ${userId}

@@ -11,10 +11,11 @@ const databaseUrl =
   rawDatabaseUrl && rawDatabaseUrl.trim() ? rawDatabaseUrl : undefined;
 
 /**
- * Active backend: real **Neon** when `DATABASE_URL` is set (deployed / configured
- * sandbox), otherwise a local embedded **PGLite** (Postgres compiled to WASM) so
- * the app has a working database even with nothing configured — the live preview
- * included. Swap in Neon later by just setting `DATABASE_URL`; no code changes.
+ * Active backend: any standard Postgres when `DATABASE_URL` is set (Supabase,
+ * Neon, or a VPS — the driver is node-postgres, not a hosted SDK). Otherwise a
+ * local embedded **PGLite** so the preview still has a database. Schema sync
+ * uses `DIRECT_URL` (port 5432) when that is set, and falls back to
+ * `DATABASE_URL`.
  */
 export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
 
@@ -35,6 +36,7 @@ export interface Sql {
     text: string,
     params?: unknown[],
   ): Promise<T[]>;
+  transaction<T>(fn: (tx: Sql) => Promise<T>): Promise<T>;
 }
 
 /**
@@ -48,6 +50,9 @@ const globalRef = globalThis as typeof globalThis & {
   __pgSqlPromise__?: Promise<Sql>;
   __pgliteInstance__?: Promise<import("@electric-sql/pglite").PGlite>;
   __pgliteMigrateChain__?: Promise<void>;
+  __pgMigratePromise__?: Promise<void>;
+  __pgBootstrapIssue__?: { message: string; hint: string } | null;
+  __pgBootstrapRetryAt__?: number;
 };
 
 /**
@@ -82,6 +87,9 @@ function toSql(run: Run): Sql {
   }) as unknown as Sql;
   sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
     run<T>(text, params);
+  sql.transaction = async () => {
+    throw new Error("This connection cannot open a transaction.");
+  };
   return sql;
 }
 
@@ -90,14 +98,38 @@ function createNeonSql(): Promise<Sql> {
     // Regular Postgres driver: node-postgres (`pg`) — works directly with Neon's
     // pooled endpoint. One pool per process; warm serverless instances reuse it.
     const { Pool, types } = await import("pg");
+    const { pgConfig } = await import("../../scripts/pg-target.mjs");
     types.setTypeParser(OID_INT8, Number);
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
-    const pool = new Pool({ connectionString: databaseUrl });
-    return toSql(async <T>(text: string, params: unknown[]) => {
+    const pool = new Pool({ ...pgConfig(databaseUrl!), max: 10 });
+    const sql = toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
     });
+    sql.transaction = async <T>(fn: (tx: Sql) => Promise<T>) => {
+      const client = await pool.connect();
+      const tx = toSql(async <R>(text: string, params: unknown[]) => {
+        const res = await client.query(text, params);
+        return res.rows as R[];
+      });
+      try {
+        await client.query("BEGIN");
+        const result = await fn(tx);
+        await client.query("COMMIT");
+        return result;
+      } catch (error) {
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          // The original error is the one that matters.
+        }
+        throw error;
+      } finally {
+        client.release();
+      }
+    };
+    return sql;
   })().catch((err) => {
     globalRef.__pgSqlPromise__ = undefined;
     throw err;
@@ -161,10 +193,19 @@ async function createPgliteSql(): Promise<Sql> {
   globalRef.__pgliteMigrateChain__ = pass;
   await pass;
 
-  return toSql(async <T>(text: string, params: unknown[]) => {
+  const sql = toSql(async <T>(text: string, params: unknown[]) => {
     const result = await pg.query<T>(text, params);
     return result.rows;
   });
+  sql.transaction = async <T>(fn: (tx: Sql) => Promise<T>) =>
+    pg.transaction(async (tx) => {
+      const scoped = toSql(async <R>(text: string, params: unknown[]) => {
+        const result = await tx.query<R>(text, params);
+        return result.rows;
+      });
+      return fn(scoped);
+    });
+  return sql;
 }
 
 let sqlPromise: Promise<Sql> | null = null;
@@ -176,7 +217,11 @@ async function createSql(): Promise<Sql> {
         "or a server route loader, never from client code.",
     );
   }
-  return dbSource === "neon" ? createNeonSql() : createPgliteSql();
+  if (dbSource === "neon") {
+    await ensurePostgresReady();
+    return createNeonSql();
+  }
+  return createPgliteSql();
 }
 
 /**
@@ -212,27 +257,119 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
 /**
  * Finish DB bootstrap before the server handles traffic.
  *
- * - **PGLite** (preview / no `DATABASE_URL`): open the in-memory DB and apply
- *   `migrations/*.sql`. Idempotent — concurrent callers share one promise.
- * - **Neon**: no-op (pool is created lazily on first query).
- *
- * Vite `configureServer` awaits this at dev startup; production imports of this
- * module kick it off immediately (see bottom of file).
+ * - **PGLite** (no `DATABASE_URL`): open the embedded DB and apply `migrations/*.sql`.
+ * - **Postgres**: apply the same files with `DIRECT_URL` (or `DATABASE_URL` if
+ *   that is all that is set), then seed settings and the ADMIN_EMAIL operator.
+ *   A failed connection is remembered for `/api/health` and does not crash the process.
  */
 export function ensureDbReady(): Promise<void> {
-  if (dbSource !== "pglite") return Promise.resolve();
-  return getSql().then(() => undefined);
+  if (dbSource === "pglite") return getSql().then(() => undefined);
+  return ensurePostgresReady();
 }
 
-// Server-only eager start: kick PGLite bootstrap as soon as this module loads in
-// Node. Client bundles never hit this path (`getSql` throws in the browser).
+function bundledMigrationFiles(): { name: string; sql: string }[] {
+  const migrations = import.meta.glob("/migrations/*.sql", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }) as Record<string, string>;
+  return Object.entries(migrations).map(([path, sql]) => ({
+    name: path.split("/").pop() ?? path,
+    sql,
+  }));
+}
+
+async function ensurePostgresReady(): Promise<void> {
+  if (globalRef.__pgMigratePromise__) return globalRef.__pgMigratePromise__;
+  if (globalRef.__pgBootstrapIssue__ && Date.now() < (globalRef.__pgBootstrapRetryAt__ ?? 0)) {
+    return;
+  }
+  const run = (async () => {
+    const { connectionAdvice, readDbUrls } = await import("../../scripts/pg-target.mjs");
+    const { migrationUrl } = readDbUrls();
+    if (!migrationUrl) return;
+    try {
+      const { applySqlMigrations } = await import("../../scripts/apply-migrations.mjs");
+      await applySqlMigrations({ connectionString: migrationUrl, files: bundledMigrationFiles() });
+      const { runSeed } = await import("../../scripts/seed.mjs");
+      await runSeed();
+      globalRef.__pgBootstrapIssue__ = null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      globalRef.__pgBootstrapIssue__ = { message, hint: connectionAdvice(message, migrationUrl) };
+      globalRef.__pgBootstrapRetryAt__ = Date.now() + 15_000;
+      globalRef.__pgMigratePromise__ = undefined;
+      console.error("[db] Postgres schema sync failed:", message);
+      console.error("[db]", globalRef.__pgBootstrapIssue__.hint);
+    }
+  })();
+  globalRef.__pgMigratePromise__ = run;
+  await run;
+}
+
+export type DatabaseHealth = {
+  ok: boolean;
+  databaseConnected: boolean;
+  driver: "postgres" | "pglite";
+  tables: number | null;
+  migrationTarget: "unset" | "direct" | "pooler" | "database-url";
+  error: string | null;
+  fix: string | null;
+};
+
+/** Live connection check for `/api/health`. Does not print secrets. */
+export async function databaseHealth(): Promise<DatabaseHealth> {
+  const { connectionAdvice, migrationTargetKind, readDbUrls } = await import("../../scripts/pg-target.mjs");
+  const kind = migrationTargetKind();
+  const driver = dbSource === "pglite" ? "pglite" : "postgres";
+  try {
+    await ensureDbReady();
+    const sql = await getSql();
+    const rows = await sql<{ tables: number }>`
+      select count(*)::int as tables
+      from information_schema.tables
+      where table_schema = 'public' and table_type = 'BASE TABLE'
+    `;
+    const tables = rows[0]?.tables ?? 0;
+    const issue = globalRef.__pgBootstrapIssue__ ?? null;
+    const poolerWarning =
+      kind === "pooler"
+        ? "Schema sync is using a pooler URL. Set DIRECT_URL to the direct connection string on port 5432, not the pooler."
+        : null;
+    return {
+      ok: !issue && tables > 0,
+      databaseConnected: true,
+      driver,
+      tables,
+      migrationTarget: driver === "pglite" ? "unset" : kind,
+      error: issue?.message ?? null,
+      fix: issue?.hint ?? poolerWarning,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const urls = readDbUrls();
+    return {
+      ok: false,
+      databaseConnected: false,
+      driver,
+      tables: null,
+      migrationTarget: driver === "pglite" ? "unset" : kind,
+      error: message,
+      fix: connectionAdvice(message, urls.migrationUrl || urls.databaseUrl),
+    };
+  }
+}
+
+// Server-only eager start. Postgres schema sync and the PGLite fallback both
+// run here so tables exist before the first request. Client bundles never hit
+// this path.
 const globalBoot = globalThis as typeof globalThis & {
   __pgBootstrapPromise__?: Promise<void>;
 };
-if (typeof window === "undefined" && dbSource === "pglite") {
+if (typeof window === "undefined") {
   globalBoot.__pgBootstrapPromise__ ??= ensureDbReady().catch((err) => {
     globalBoot.__pgBootstrapPromise__ = undefined;
-    console.error("[db] PGLite bootstrap failed:", err);
-    throw err;
+    console.error("[db] bootstrap failed:", err);
+    if (dbSource === "pglite") throw err;
   });
 }

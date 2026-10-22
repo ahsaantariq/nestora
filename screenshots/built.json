@@ -7,8 +7,8 @@
       "status": 200,
       "title": "Nestora",
       "hasCanvas": false,
-      "bodyTextLen": 1359,
-      "bodyTextHash": "3222cad345a7540be50645b2bf5ac9fb31a17ddf7ea061ac730cd7abcfcd5643",
+      "bodyTextLen": 2343,
+      "bodyTextHash": "6eb7df962c7bdf2ae72a32a542e54563a5fe71c8fc76cfdfbf63e1d4b3bf347a",
       "bodyTextPrefix": "Skip to content Nestora Stays List your space Sign in Create acc",
       "horizontalOverflow": false,
       "consoleErrors": [],
@@ -21,8 +21,8 @@
       "status": 200,
       "title": "Nestora",
       "hasCanvas": false,
-      "bodyTextLen": 1163,
-      "bodyTextHash": "7cf0bb82bfe0aef08761bb2865a3effc9b6f9f35d35dcc63fc5677f9b2dd6bad",
+      "bodyTextLen": 2147,
+      "bodyTextHash": "e2431562f2e8fdd3c353fab5dcb413717237109e113c8ed174b58062c344de3c",
       "bodyTextPrefix": "Skip to content Nestora A marketplace for real rooms Find your s",
       "horizontalOverflow": false,
       "consoleErrors": [],
@@ -35,6 +35,7 @@
   "verdictFile": "/workspace/screenshots/built.json",
   "divergesFromBaseline": true,
   "baselineReasons": [
-    "desktop: body text changed (1208 -> 1359 chars, hash mismatch)"
+    "desktop: body text changed (2104 -> 2343 chars, hash mismatch)",
+    "mobile: body text changed (1931 -> 2147 chars, hash mismatch)"
   ]
 }

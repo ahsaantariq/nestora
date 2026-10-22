@@ -130,6 +130,8 @@ export function SiteFooter() {
           <ul className="mt-3 space-y-2 text-muted">
             <li><Link to="/list" className="hover:text-ink">List your space</Link></li>
             <li><Link to="/host" className="hover:text-ink">Host desk</Link></li>
+            <li><Link to="/status" className="hover:text-ink">Database status</Link></li>
+            <li><span className="text-muted">English · prices in the listing currency</span></li>
           </ul>
         </div>
       </div>
