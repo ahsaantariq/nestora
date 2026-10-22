@@ -32,8 +32,8 @@ function ReportsPage() {
   return (
     <>
       <PageIntro title="Reports" body="Export bookings as CSV. If nobody has booked, the file is the header row only — not sample rows." />
-      <Button type="button" onClick={() => void exportCsv()} disabled={pending}>
-        {pending ? "Preparing…" : "Export bookings CSV"}
+      <Button type="button" onClick={() => void exportCsv()} loading={pending} loadingLabel="Preparing...">
+        Export bookings CSV
       </Button>
       {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
     </>

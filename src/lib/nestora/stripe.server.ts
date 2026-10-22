@@ -1,17 +1,25 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { readStripeRuntime } from "./integrations.server.ts";
 
-function secret(): string {
-  const key = process.env.STRIPE_SECRET_KEY?.trim();
-  if (!key) throw new Error("Card payments are not configured. Set STRIPE_SECRET_KEY on the server.");
-  return key;
+async function secret(): Promise<string> {
+  const stripe = await readStripeRuntime();
+  if (!stripe.secret) throw new Error("Card payments are not set up yet.");
+  return stripe.secret;
 }
 
-export function stripePublishableKey(): string | null {
-  return process.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim() || null;
+export async function stripePublishableKey(): Promise<string | null> {
+  const stripe = await readStripeRuntime();
+  return stripe.publishable || null;
 }
 
-export function stripeConfigured(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
+export async function stripeWebhookSecret(): Promise<string | null> {
+  const stripe = await readStripeRuntime();
+  return stripe.webhook || null;
+}
+
+export async function stripeConfigured(): Promise<boolean> {
+  const stripe = await readStripeRuntime();
+  return Boolean(stripe.secret);
 }
 
 export async function stripeForm(
@@ -26,7 +34,7 @@ export async function stripeForm(
   const response = await fetch(`https://api.stripe.com/v1/${path}`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${secret()}`,
+      Authorization: `Bearer ${await secret()}`,
       "Content-Type": "application/x-www-form-urlencoded",
       "Idempotency-Key": idempotencyKey,
     },
@@ -41,7 +49,7 @@ export async function stripeForm(
 
 export async function stripeGet(path: string) {
   const response = await fetch(`https://api.stripe.com/v1/${path}`, {
-    headers: { Authorization: `Bearer ${secret()}` },
+    headers: { Authorization: `Bearer ${await secret()}` },
   });
   const json = (await response.json()) as { error?: { message?: string } };
   if (!response.ok) throw new Error(json.error?.message || "Stripe could not be reached.");

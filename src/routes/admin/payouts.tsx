@@ -10,6 +10,7 @@ export const Route = createFileRoute("/admin/payouts")({ component: AdminPayouts
 function AdminPayouts() {
   const [data, setData] = useState<Awaited<ReturnType<typeof loadAdminTables>> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paying, setPaying] = useState<string | null>(null);
   const [reference, setReference] = useState("");
   function reload() {
     loadAdminTables().then(setData).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not load payouts."));
@@ -33,10 +34,14 @@ function AdminPayouts() {
             {row.status === "PENDING" ? (
               <form className="flex gap-2" onSubmit={(event) => {
                 event.preventDefault();
-                payHost({ data: { payoutId: row.id, bankReference: reference } }).then(reload).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not mark that paid."));
+                setPaying(row.id);
+                payHost({ data: { payoutId: row.id, bankReference: reference } })
+                  .then(reload)
+                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not mark that paid."))
+                  .finally(() => setPaying(null));
               }}>
                 <TextInput value={reference} placeholder="Bank reference" onChange={(event) => setReference(event.target.value)} />
-                <Button type="submit">Mark paid</Button>
+                <Button type="submit" loading={paying === row.id} loadingLabel="Saving...">Mark paid</Button>
               </form>
             ) : null}
           </li>

@@ -138,6 +138,11 @@ export const loadPayouts = createServerFn({ method: "GET" })
     return readPayoutAccount(context.userId);
   });
 
+export const publicFeesFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { readSettings } = await import("./data.server.ts");
+  return readSettings();
+});
+
 export const loadSettings = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
@@ -206,10 +211,14 @@ export const loadAdminTables = createServerFn({ method: "GET" })
     return adminTables(context.userId);
   });
 
-export const loadHealth = createServerFn({ method: "GET" }).handler(async () => {
-  const { databaseHealth } = await import("@/lib/db");
-  return databaseHealth();
-});
+export const loadHealth = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireActive } = await import("./data.server.ts");
+    await requireActive(context.userId, ["ADMIN"]);
+    const { databaseHealth } = await import("@/lib/db");
+    return databaseHealth();
+  });
 
 export const loadDestinations = createServerFn({ method: "GET" }).handler(async () => {
   const { listDestinations } = await import("./listings.server.ts");
@@ -484,6 +493,300 @@ export const loadReviewListing = createServerFn({ method: "POST" })
     const { loadOwnListing } = await import("./listings.server.ts");
     return loadOwnListing(context.userId, data.id);
   });
+
+export const prepareSignupFn = createServerFn({ method: "POST" })
+  .validator((input: unknown) =>
+    parseInput(
+      z.object({
+        email: z.string().email(),
+        kind: z.enum(["CUSTOMER", "OWNER"]),
+        payload: z.record(z.string(), z.unknown()).default({}),
+      }),
+      input,
+    ),
+  )
+  .handler(async ({ data }) => {
+    const { prepareSignup } = await import("./security.server.ts");
+    return prepareSignup(data);
+  });
+
+export const claimVerificationFn = createServerFn({ method: "POST" })
+  .validator((input: unknown) => parseInput(z.object({ email: z.string().email(), nonce: z.string().min(8) }), input))
+  .handler(async ({ data }) => {
+    const { claimVerificationFallback } = await import("./security.server.ts");
+    return claimVerificationFallback(data.email, data.nonce);
+  });
+
+export const resendVerificationFn = createServerFn({ method: "POST" })
+  .validator((input: unknown) => parseInput(z.object({ email: z.string().email(), password: z.string().min(8).max(200) }), input))
+  .handler(async ({ data }) => {
+    const { resendVerification } = await import("./security.server.ts");
+    return resendVerification(data.email, data.password);
+  });
+
+export const sessionSecurityFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { sessionSecurity } = await import("./security.server.ts");
+    return sessionSecurity(context.userId);
+  });
+
+export const securityStatusFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { securityStatus } = await import("./security.server.ts");
+    return securityStatus(context.userId);
+  });
+
+export const beginTwoFactorFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ password: z.string().min(8).max(200) }), input))
+  .handler(async ({ context, data }) => {
+    const { beginTwoFactor } = await import("./security.server.ts");
+    return beginTwoFactor(context.userId, data.password);
+  });
+
+export const confirmTwoFactorFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ code: z.string().min(6).max(12) }), input))
+  .handler(async ({ context, data }) => {
+    const { confirmTwoFactorSetup } = await import("./security.server.ts");
+    return confirmTwoFactorSetup(context.userId, data.code);
+  });
+
+export const verifySecondFactorFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ code: z.string().min(4).max(20) }), input))
+  .handler(async ({ context, data }) => {
+    const { verifySecondFactor } = await import("./security.server.ts");
+    return verifySecondFactor(context.userId, data.code);
+  });
+
+export const disableTwoFactorFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ password: z.string().min(8), code: z.string().min(4).max(20) }), input))
+  .handler(async ({ context, data }) => {
+    const { disableTwoFactor } = await import("./security.server.ts");
+    return disableTwoFactor(context.userId, data.password, data.code);
+  });
+
+export const regenerateBackupFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ password: z.string().min(8), code: z.string().min(4).max(20) }), input))
+  .handler(async ({ context, data }) => {
+    const { regenerateBackupCodes } = await import("./security.server.ts");
+    return regenerateBackupCodes(context.userId, data.password, data.code);
+  });
+
+export const resetTwoFactorFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ userId: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { resetUserTwoFactor } = await import("./security.server.ts");
+    return resetUserTwoFactor(context.userId, data.userId);
+  });
+
+export const loadIntegrationsFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { readIntegrationView } = await import("./integrations.server.ts");
+    return readIntegrationView(context.userId);
+  });
+
+export const saveIntegrationsFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) =>
+    parseInput(
+      z.object({
+        stripePublishableKey: z.string().max(200).default(""),
+        stripeSecret: z.string().max(200).default(""),
+        stripeWebhookSecret: z.string().max(200).default(""),
+        stripeLive: z.boolean(),
+        clearStripeSecret: z.boolean().default(false),
+        clearStripeWebhook: z.boolean().default(false),
+        smtpHost: z.string().max(200).default(""),
+        smtpPort: z.string().max(6).default(""),
+        smtpSecurity: z.enum(["TLS", "SSL", "NONE"]),
+        smtpUsername: z.string().max(200).default(""),
+        smtpPassword: z.string().max(200).default(""),
+        clearSmtpPassword: z.boolean().default(false),
+        smtpFromName: z.string().max(120).default(""),
+        smtpFromEmail: z.string().max(200).default(""),
+        requireOwner2fa: z.boolean(),
+      }),
+      input,
+    ),
+  )
+  .handler(async ({ context, data }) => {
+    const { saveIntegrations } = await import("./integrations.server.ts");
+    return saveIntegrations(context.userId, data);
+  });
+
+export const testStripeFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { testStripe } = await import("./integrations.server.ts");
+    return testStripe(context.userId);
+  });
+
+export const sendTestEmailFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { sendTestEmail } = await import("./integrations.server.ts");
+    return sendTestEmail(context.userId);
+  });
+
+export const loadEmailLogFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireActive } = await import("./data.server.ts");
+    await requireActive(context.userId, ["ADMIN"]);
+    const { listEmailLog, drainEmailQueue } = await import("./mail.server.ts");
+    await drainEmailQueue();
+    return listEmailLog();
+  });
+
+export const deletePropertyFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ id: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { deleteOwnProperty } = await import("./deletes.server.ts");
+    return deleteOwnProperty(context.userId, data.id);
+  });
+
+export const pausePropertyFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ id: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { pauseOwnProperty } = await import("./deletes.server.ts");
+    return pauseOwnProperty(context.userId, data.id);
+  });
+
+export const deleteRoomFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ id: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { deleteOwnRoom } = await import("./deletes.server.ts");
+    return deleteOwnRoom(context.userId, data.id);
+  });
+
+export const loadOwnerRoomsFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { listOwnerRooms } = await import("./deletes.server.ts");
+    return listOwnerRooms(context.userId);
+  });
+
+export const deleteSavedFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ propertyId: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { deleteSavedStay } = await import("./deletes.server.ts");
+    return deleteSavedStay(context.userId, data.propertyId);
+  });
+
+export const deleteCardFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ cardId: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { deleteSavedCard } = await import("./deletes.server.ts");
+    return deleteSavedCard(context.userId, data.cardId);
+  });
+
+export const deleteAccountFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ password: z.string().min(8).max(200) }), input))
+  .handler(async ({ context, data }) => {
+    const { deleteOwnAccount } = await import("./deletes.server.ts");
+    return deleteOwnAccount(context.userId, data.password);
+  });
+
+export const adminDeletePropertyFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ id: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { adminDeleteProperty } = await import("./deletes.server.ts");
+    return adminDeleteProperty(context.userId, data.id);
+  });
+
+export const adminDeleteUserFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ userId: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { adminDeleteUser } = await import("./deletes.server.ts");
+    return adminDeleteUser(context.userId, data.userId);
+  });
+
+export const adminDeleteReviewFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ id: z.string().min(1) }), input))
+  .handler(async ({ context, data }) => {
+    const { adminDeleteReview } = await import("./deletes.server.ts");
+    return adminDeleteReview(context.userId, data.id);
+  });
+
+export const adminDeletePromoFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ code: z.string().min(1).max(40) }), input))
+  .handler(async ({ context, data }) => {
+    const { adminDeletePromo } = await import("./deletes.server.ts");
+    return adminDeletePromo(context.userId, data.code);
+  });
+
+export const loadPromosFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { listPromos } = await import("./deletes.server.ts");
+    return listPromos(context.userId);
+  });
+
+export const savePromoFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) =>
+    parseInput(z.object({ code: z.string().min(3).max(24), percent: z.number().nullable(), amountCents: z.number().int().nullable() }), input),
+  )
+  .handler(async ({ context, data }) => {
+    const { savePromo } = await import("./deletes.server.ts");
+    return savePromo(context.userId, data);
+  });
+
+export const loadReviewsFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { listReviews } = await import("./deletes.server.ts");
+    return listReviews(context.userId);
+  });
+
+export const loadAllPropertiesFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { listAllProperties } = await import("./deletes.server.ts");
+    return listAllProperties(context.userId);
+  });
+
+export const setPropertyCapFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => parseInput(z.object({ userId: z.string().min(1), maxProperties: z.number().int().nullable() }), input))
+  .handler(async ({ context, data }) => {
+    const { setOwnerPropertyCap } = await import("./deletes.server.ts");
+    return setOwnerPropertyCap(context.userId, data.userId, data.maxProperties);
+  });
+
+export const placeSearchFn = createServerFn({ method: "POST" })
+  .validator((input: unknown) => parseInput(z.object({ query: z.string().trim().min(2).max(120) }), input))
+  .handler(async ({ data }) => {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=${encodeURIComponent(data.query)}`, {
+      headers: { Accept: "application/json", "User-Agent": "Nestora/1.0" },
+    });
+    if (!response.ok) return [];
+    const rows = (await response.json()) as { display_name?: string; lat?: string; lon?: string }[];
+    return rows.slice(0, 5).map((row) => ({
+      label: row.display_name ?? "",
+      lat: Number(row.lat),
+      lng: Number(row.lon),
+    }));
+  });
+
 
 
 

@@ -10,6 +10,7 @@ export const Route = createFileRoute("/admin/bookings")({ component: AdminBookin
 function AdminBookings() {
   const [data, setData] = useState<Awaited<ReturnType<typeof loadAdminTables>> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     loadAdminTables()
@@ -19,7 +20,7 @@ function AdminBookings() {
   }, []);
   return (
     <>
-      <PageIntro title="Bookings" body="Cancel from here to refund the original card under the stay's policy. A full refund is used for an operator cancellation. If Stripe fails, retry." />
+      <PageIntro title="Bookings" body="Cancel a booking to refund the original card under that stay's policy. If the refund fails, retry it." />
       {error ? <EmptyState title="Bookings didn't load" body={error} /> : null}
       {!data && !error ? <Skeleton className="h-24" /> : null}
       {data && data.bookings.length === 0 ? <EmptyState title="No bookings" body="The bookings table is empty." /> : null}
@@ -33,10 +34,22 @@ function AdminBookings() {
             <div className="flex items-center gap-2">
               <StatusPill>{row.status.toLowerCase()}</StatusPill>
               {row.status === "CONFIRMED" || row.status === "PENDING" ? (
-                <Button variant="danger" onClick={() => cancelTrip({ data: { bookingId: row.id } }).then(() => loadAdminTables().then(setData)).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not cancel."))}>Cancel</Button>
+                <Button variant="danger" loading={busy === row.id + "cancel"} loadingLabel="Cancelling..." onClick={() => {
+                  setBusy(row.id + "cancel");
+                  cancelTrip({ data: { bookingId: row.id } })
+                    .then(() => loadAdminTables().then(setData))
+                    .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not cancel."))
+                    .finally(() => setBusy(null));
+                }}>Cancel</Button>
               ) : null}
               {row.status === "CANCELLED" ? (
-                <Button variant="quiet" onClick={() => retryRefundFn({ data: { bookingId: row.id } }).then(() => loadAdminTables().then(setData)).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Refund retry failed."))}>Retry refund</Button>
+                <Button variant="quiet" loading={busy === row.id + "refund"} loadingLabel="Retrying..." onClick={() => {
+                  setBusy(row.id + "refund");
+                  retryRefundFn({ data: { bookingId: row.id } })
+                    .then(() => loadAdminTables().then(setData))
+                    .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Refund retry failed."))
+                    .finally(() => setBusy(null));
+                }}>Retry refund</Button>
               ) : null}
             </div>
           </li>

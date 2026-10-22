@@ -18,7 +18,7 @@ function Overview() {
   }, []);
   return (
     <>
-      <PageIntro eyebrow="Guest" title="Your trips" body="Upcoming, past, and cancelled bookings from your account. Counts come from the database." />
+      <PageIntro eyebrow="Guest" title="Your trips" body="Upcoming, past, and cancelled bookings on this account." />
       {error ? <EmptyState title="Overview didn't load" body={error} /> : null}
       {!data && !error ? <Skeleton className="h-32" /> : null}
       {data ? (

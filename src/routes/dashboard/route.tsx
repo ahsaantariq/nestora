@@ -14,6 +14,7 @@ export const Route = createFileRoute("/dashboard")({
             <DeskLink to="/dashboard/saved">Saved properties</DeskLink>
             <DeskLink to="/dashboard/notifications">Notifications</DeskLink>
             <DeskLink to="/dashboard/profile">Profile</DeskLink>
+            <DeskLink to="/dashboard/security">Security</DeskLink>
           </>
         }
       >

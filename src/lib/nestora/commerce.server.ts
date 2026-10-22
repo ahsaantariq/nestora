@@ -274,8 +274,8 @@ export async function readCheckout(userId: string, bookingId: string) {
   if (!row) throw new Error("That checkout was not found.");
   return {
     ...row,
-    paymentsReady: stripeConfigured() && Boolean(stripePublishableKey()),
-    publishableKey: stripePublishableKey(),
+    paymentsReady: (await stripeConfigured()) && Boolean(await stripePublishableKey()),
+    publishableKey: await stripePublishableKey(),
   };
 }
 
@@ -285,7 +285,7 @@ export async function beginCardPayment(userId: string, bookingId: string) {
   if (checkout.hold_expires_at && new Date(checkout.hold_expires_at).getTime() < Date.now()) {
     throw new Error("The 15-minute hold expired. Start the booking again.");
   }
-  if (!stripeConfigured()) throw new Error("Card payments are not configured. Set STRIPE_SECRET_KEY on the server.");
+  if (!(await stripeConfigured())) throw new Error("Card payments are not set up yet.");
   const sql = await getSql();
   const profile = await requireActive(userId);
   let customerId = (await sql<{ stripe_customer_id: string | null }>`
@@ -316,7 +316,7 @@ export async function beginCardPayment(userId: string, bookingId: string) {
     values (${randomUUID()}, ${checkout.id}, ${profile.userId}, ${intentId}, ${`pay-${checkout.id}`}, ${checkout.total_cents}, ${checkout.currency}, 'REQUIRES_PAYMENT')
     on conflict (idempotency_key) do update set stripe_payment_intent_id = excluded.stripe_payment_intent_id, status = 'REQUIRES_PAYMENT'
   `;
-  return { clientSecret: String(intent.client_secret), publishableKey: stripePublishableKey() };
+  return { clientSecret: String(intent.client_secret), publishableKey: await stripePublishableKey() };
 }
 
 export async function markBookingPaid(bookingId: string, paymentIntentId: string) {
@@ -382,13 +382,13 @@ export async function markBookingPaid(bookingId: string, paymentIntentId: string
     template: "owner-new-booking",
     title: `New booking — ${booking.title}`,
     body: text,
-    href: "/host/bookings",
+    href: "/host/dashboard/bookings",
   });
 }
 
 export async function syncPayment(userId: string, bookingId: string) {
   const checkout = await readCheckout(userId, bookingId);
-  if (!checkout.stripe_payment_intent_id || !stripeConfigured()) return checkout;
+  if (!checkout.stripe_payment_intent_id || !(await stripeConfigured())) return checkout;
   const intent = await stripeGet(`payment_intents/${checkout.stripe_payment_intent_id}`);
   if (intent.status === "succeeded") await markBookingPaid(bookingId, checkout.stripe_payment_intent_id);
   return readCheckout(userId, bookingId);
@@ -536,7 +536,7 @@ async function issueRefund(input: {
   const sql = await getSql();
   const refundId = randomUUID();
   const idempotency = `refund-${input.bookingId}-${input.amountCents}`;
-  if (!input.paymentIntentId || !stripeConfigured()) {
+  if (!input.paymentIntentId || !(await stripeConfigured())) {
     await sql`
       insert into refunds (id, payment_id, booking_id, idempotency_key, amount_cents, status, reason, failure_message)
       values (${refundId}, ${input.paymentId}, ${input.bookingId}, ${idempotency}, ${input.amountCents}, 'FAILED', ${input.reason}, 'Stripe is not configured or this booking has no payment intent.')

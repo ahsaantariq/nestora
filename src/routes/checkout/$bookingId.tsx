@@ -90,10 +90,10 @@ function CheckoutPage() {
             {row.paymentsReady ? (
               <>
                 <div id="payment-element" />
-                <Button type="button" disabled={paying || left === 0} onClick={() => void pay()}>{paying ? "Contacting the card network…" : "Pay now"}</Button>
+                <Button type="button" loading={paying} loadingLabel="Paying..." disabled={left === 0} onClick={() => void pay()}>Pay now</Button>
               </>
             ) : (
-              <p className="text-sm text-muted">Card checkout needs STRIPE_SECRET_KEY and VITE_STRIPE_PUBLISHABLE_KEY. The dates stay held, and nothing is charged until those are set. No card form is shown, because Nestora will not collect card numbers itself.</p>
+              <p className="text-sm text-muted">Card checkout isn't available until payments are connected. Your dates stay held, and nothing is charged yet.</p>
             )}
           </div>
         ) : null}

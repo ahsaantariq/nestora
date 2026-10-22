@@ -14,6 +14,7 @@ function TripPage() {
   const [done, setDone] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [body, setBody] = useState("");
+  const [busy, setBusy] = useState<"cancel" | "review" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,24 +37,28 @@ function TripPage() {
             <p className="text-sm">If you cancel now, the refund to the original card would be {formatMoney(preview.refundCents)}. {formatMoney(preview.retainedCents)} would be kept.</p>
             {done ? <p className="text-sm">{done}</p> : null}
             {preview.status === "CONFIRMED" || preview.status === "PENDING" ? (
-              <Button variant="danger" onClick={() => {
+              <Button variant="danger" loading={busy === "cancel"} loadingLabel="Cancelling..." onClick={() => {
+                setBusy("cancel");
                 cancelTrip({ data: { bookingId } })
                   .then((result) => setDone(`Cancelled. Refund status: ${"refundStatus" in result ? result.refundStatus : "see email"}.`))
-                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not cancel."));
+                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not cancel."))
+                  .finally(() => setBusy(null));
               }}>Cancel booking</Button>
             ) : null}
             {preview.status === "COMPLETED" ? (
               <form className="space-y-3" onSubmit={(event) => {
                 event.preventDefault();
+                setBusy("review");
                 publishReview({ data: { bookingId, rating, body } })
                   .then(() => setDone("Review saved."))
-                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not save the review."));
+                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not save the review."))
+                  .finally(() => setBusy(null));
               }}>
                 <label className="block text-sm">Rating
                   <input className="mt-1 h-11 w-full rounded-button border border-line px-3" type="number" min={1} max={5} value={rating} onChange={(event) => setRating(Number(event.target.value))} />
                 </label>
                 <TextArea value={body} onChange={(event) => setBody(event.target.value)} placeholder="What should the next guest know?" />
-                <Button type="submit">Publish review</Button>
+                <Button type="submit" loading={busy === "review"} loadingLabel="Saving...">Publish review</Button>
               </form>
             ) : <p className="text-sm text-muted">Reviews open after the stay is marked completed.</p>}
             <p className="text-xs text-muted">Print this page to keep a receipt. Card numbers are not on it.</p>

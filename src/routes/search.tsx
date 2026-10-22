@@ -20,7 +20,7 @@ function SearchPage() {
   const [stays, setStays] = useState<StayCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const guests = (search.adults ?? 0) + (search.children ?? 0) + (search.infants ?? 0);
-  const amenities = (search.amenities ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+  const amenities = (search.amenities ?? "").split(",").map((item: string) => item.trim()).filter(Boolean);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,14 +65,14 @@ function SearchPage() {
   ]);
 
   function patch(next: CatalogSearch) {
-    void navigate({ search: (prev) => ({ ...prev, ...next }) });
+    void navigate({ search: (prev: CatalogSearch) => ({ ...prev, ...next }) });
   }
 
   return (
     <PublicFrame>
       <div className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="font-display text-4xl">Stays</h1>
-        <p className="mt-2 text-sm text-muted">Live listings only. Filters apply to what's actually approved.</p>
+        <p className="mt-2 text-sm text-muted">Live listings only.</p>
         <div className="mt-6">
           <SearchBar
             initial={{
@@ -169,7 +169,7 @@ function SearchPage() {
                         className="size-4"
                         checked={on}
                         onChange={() => {
-                          const next = on ? amenities.filter((item) => item !== amenity) : [...amenities, amenity];
+                          const next = on ? amenities.filter((item: string) => item !== amenity) : [...amenities, amenity];
                           patch({ amenities: next.join(",") || undefined });
                         }}
                       />
@@ -215,15 +215,17 @@ function SearchPage() {
                 title="No stays match"
                 body="Nothing live fits these filters. Widen them, or list a space of your own."
                 action={
-                  <Link to="/list" className="text-sm font-medium text-primary">
-                    List your space
+                  <Link to="/host" className="text-sm font-medium text-primary">
+                    List your property
                   </Link>
                 }
               />
             ) : null}
             <div className="space-y-3">
               {stays?.map((stay) => (
-                <Link key={stay.id} to="/stay/$slug" params={{ slug: stay.slug }} className="block rounded-card bg-surface p-5 shadow-soft">
+                <Link key={stay.id} to="/stay/$slug" params={{ slug: stay.slug }} className="flex gap-4 rounded-card bg-surface p-4 shadow-soft">
+                  {stay.coverUrl ? <img src={stay.coverUrl} alt="" className="h-24 w-32 shrink-0 rounded-[10px] object-cover" /> : <div className="h-24 w-32 shrink-0 rounded-[10px] bg-primary/10" />}
+                  <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wide text-primary">{labelFor(stay.propertyType)}</p>
@@ -233,6 +235,7 @@ function SearchPage() {
                     <p className="text-sm font-medium tabular-nums">{formatMoney(stay.nightlyCents)}</p>
                   </div>
                   {stay.summary ? <p className="mt-3 text-sm text-muted">{stay.summary}</p> : null}
+                  </div>
                 </Link>
               ))}
             </div>

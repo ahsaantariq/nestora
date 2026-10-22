@@ -1,54 +1,82 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export function Button({
   variant = "primary",
   className,
+  loading = false,
+  loadingLabel,
+  disabled,
+  children,
+  type = "button",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "accent" | "quiet" | "danger" }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "accent" | "quiet" | "danger";
+  loading?: boolean;
+  loadingLabel?: string;
+}) {
+  const busy = Boolean(loading);
   return (
     <button
+      type={type}
+      aria-busy={busy || undefined}
+      disabled={disabled || busy}
       className={cn(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-button px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex h-11 items-center justify-center gap-2 rounded-[10px] px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60",
         variant === "primary" && "bg-primary text-surface hover:bg-primary-hover",
         variant === "accent" && "bg-accent text-ink hover:bg-accent/90",
-        variant === "quiet" && "border border-line bg-surface text-ink hover:bg-bg",
+        variant === "quiet" && "border border-[#D9D3C7] bg-white text-ink hover:bg-bg",
         variant === "danger" && "bg-danger text-surface hover:bg-danger/90",
         className,
       )}
       {...props}
-    />
+    >
+      {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+      {busy ? (loadingLabel ?? children) : children}
+    </button>
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Field({
+  label,
+  hint,
+  error,
+  required,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string | null;
+  required?: boolean;
+  children: ReactNode;
+}) {
   return (
     <label className="block space-y-1.5 text-sm">
-      <span className="font-medium text-ink">{label}</span>
+      <span className="font-medium text-ink">
+        {label}
+        {required ? <span className="ml-0.5 text-danger">*</span> : null}
+      </span>
       {children}
-      {hint ? <span className="block text-xs text-muted">{hint}</span> : null}
+      {error ? <span className="block text-xs text-danger">{error}</span> : null}
+      {!error && hint ? <span className="block text-xs text-muted">{hint}</span> : null}
     </label>
   );
 }
 
-const control =
-  "h-11 w-full rounded-button border border-line bg-surface px-3 text-sm text-ink placeholder:text-muted";
+export const controlClass =
+  "h-11 w-full rounded-[10px] border border-[#D9D3C7] bg-white px-3.5 text-sm text-ink shadow-none placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25 disabled:cursor-not-allowed disabled:bg-bg disabled:text-muted aria-[invalid=true]:border-danger";
 
-export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(control, props.className)} {...props} />;
+export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return <input className={cn(controlClass, className)} {...props} />;
 }
 
-export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      className={cn(control, "h-auto min-h-28 py-3", props.className)}
-      {...props}
-    />
-  );
+export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea className={cn(controlClass, "h-auto min-h-28 py-3", className)} {...props} />;
 }
 
-export function SelectInput(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cn(control, props.className)} {...props} />;
+export function SelectInput({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select className={cn(controlClass, className)} {...props} />;
 }
 
 export function Skeleton({ className }: { className?: string }) {

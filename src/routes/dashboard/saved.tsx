@@ -1,15 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { loadSavedStays } from "@/lib/nestora/functions";
+import { deleteSavedFn, loadSavedStays } from "@/lib/nestora/functions";
 import { formatMoney } from "@/lib/domain/money";
 import { PageIntro } from "@/components/workspace";
-import { EmptyState, Skeleton } from "@/components/ui";
+import { useConfirm } from "@/components/forms";
+import { Button, EmptyState, Skeleton } from "@/components/ui";
 
 export const Route = createFileRoute("/dashboard/saved")({ component: SavedPage });
 
 function SavedPage() {
   const [rows, setRows] = useState<Awaited<ReturnType<typeof loadSavedStays>> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
+  function reload() {
+    return loadSavedStays().then(setRows);
+  }
   useEffect(() => {
     let cancelled = false;
     loadSavedStays()
@@ -19,6 +24,7 @@ function SavedPage() {
   }, []);
   return (
     <>
+      {confirm.dialog}
       <PageIntro title="Saved properties" body="Stays you mark are kept on your account." />
       {error ? <EmptyState title="Saved stays didn't load" body={error} /> : null}
       {!rows && !error ? <Skeleton className="h-24" /> : null}
@@ -27,11 +33,15 @@ function SavedPage() {
       ) : null}
       <ul className="space-y-3">
         {rows?.map((stay) => (
-          <li key={stay.id}>
-            <Link to="/stay/$slug" params={{ slug: stay.slug }} className="block rounded-card bg-surface p-4 shadow-soft">
+          <li key={stay.id} className="flex items-center justify-between gap-3 rounded-card bg-surface p-4 shadow-soft">
+            <Link to="/stay/$slug" params={{ slug: stay.slug }} className="min-w-0">
               <p className="font-medium">{stay.title}</p>
               <p className="text-sm text-muted">{stay.city} · {formatMoney(stay.nightlyCents)} / night</p>
             </Link>
+            <Button variant="danger" onClick={() => confirm.ask("Remove this saved stay?", "You can save it again from the listing.", async () => {
+              await deleteSavedFn({ data: { propertyId: stay.id } });
+              await reload();
+            })}>Delete</Button>
           </li>
         ))}
       </ul>

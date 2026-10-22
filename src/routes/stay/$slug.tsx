@@ -51,6 +51,7 @@ function StayPage() {
   }, [stay, slug, checkIn, checkOut, adults, children, infants, pets]);
 
   const images = stay?.media.filter((item) => item.kind === "IMAGE") ?? [];
+  const videos = stay?.media.filter((item) => item.kind === "VIDEO") ?? [];
   const current = images[photo];
 
   return (
@@ -88,6 +89,12 @@ function StayPage() {
               <ul className="mt-8 flex flex-wrap gap-2">
                 {stay.amenities.map((amenity) => <li key={amenity} className="rounded-button bg-surface px-3 py-2 text-sm shadow-soft">{amenity}</li>)}
               </ul>
+              {videos.length > 0 ? (
+                <section className="mt-8 space-y-3">
+                  <h2 className="font-display text-2xl">Video</h2>
+                  {videos.map((item) => <video key={item.id} src={item.url} controls className="w-full rounded-card" />)}
+                </section>
+              ) : null}
               <section className="mt-8">
                 <h2 className="font-display text-2xl">House rules</h2>
                 <p className="mt-2 text-sm text-muted">{stay.houseRules || "The host hasn't added house rules."}</p>
@@ -160,7 +167,7 @@ function StayPage() {
                 </ul>
               ) : null}
               <div className="mt-4 flex gap-2">
-                <Button className="flex-1" disabled={busy || !quote} onClick={() => {
+                <Button className="flex-1" loading={busy} loadingLabel="Holding dates..." disabled={!quote} onClick={() => {
                   if (!user) { void navigate({ to: "/login" }); return; }
                   setBusy(true);
                   holdTrip({ data: { slug, checkIn, checkOut, adults, children, infants, petCount: pets, requests: "" } })

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { loadSettings, saveFees } from "@/lib/nestora/functions";
-import { SettingsList } from "@/routes/host/fees";
+import { SettingsList } from "@/routes/host/dashboard/fees";
 import { PageIntro } from "@/components/workspace";
 import { Button, EmptyState, Skeleton, TextInput } from "@/components/ui";
 
@@ -48,9 +48,11 @@ function FeeEditor({
   const [managed, setManaged] = useState(String(initial.managedManagementBps / 100));
   const [tax, setTax] = useState(String(initial.taxBps / 100));
   const [service, setService] = useState(String(initial.serviceFeeBps / 100));
+  const [saving, setSaving] = useState(false);
   return (
     <form className="mt-8 grid gap-3 rounded-card bg-surface p-5 shadow-soft sm:grid-cols-2" onSubmit={(event) => {
       event.preventDefault();
+      setSaving(true);
       saveFees({
         data: {
           subscriptionEnabled,
@@ -61,7 +63,7 @@ function FeeEditor({
           taxBps: Math.round(Number(tax) * 100) || 0,
           serviceFeeBps: Math.round(Number(service) * 100) || 0,
         },
-      }).then(onSaved).catch((reason: unknown) => onError(reason instanceof Error ? reason.message : "Could not save settings."));
+      }).then(onSaved).catch((reason: unknown) => onError(reason instanceof Error ? reason.message : "Could not save settings.")).finally(() => setSaving(false));
     }}>
       <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={subscriptionEnabled} onChange={(event) => setSubscriptionEnabled(event.target.checked)} /> Monthly subscription</label>
       <label className="text-sm">Amount<TextInput className="mt-1" value={subscription} onChange={(event) => setSubscription(event.target.value)} /></label>
@@ -70,7 +72,7 @@ function FeeEditor({
       <label className="text-sm">Management %<TextInput className="mt-1" value={managed} onChange={(event) => setManaged(event.target.value)} /></label>
       <label className="text-sm">Tax %<TextInput className="mt-1" value={tax} onChange={(event) => setTax(event.target.value)} /></label>
       <label className="text-sm">Service fee %<TextInput className="mt-1" value={service} onChange={(event) => setService(event.target.value)} /></label>
-      <Button type="submit">Save settings</Button>
+      <Button type="submit" loading={saving} loadingLabel="Saving...">Save settings</Button>
     </form>
   );
 }

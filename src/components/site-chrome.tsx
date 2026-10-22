@@ -28,12 +28,9 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <Wordmark />
         <nav className="hidden items-center gap-6 text-sm md:flex">
-          <Link to="/search" className="text-ink hover:text-primary">
-            Stays
-          </Link>
-          <Link to="/list" className="text-ink hover:text-primary">
-            List your space
-          </Link>
+          <Link to="/search" className="text-ink hover:text-primary">Stays</Link>
+          <Link to="/host" className="text-ink hover:text-primary">List your property</Link>
+          <Link to="/signup" className="text-ink hover:text-primary">Sign up</Link>
         </nav>
         <div className="hidden items-center gap-3 md:flex">
           <AuthLinks pending={isPending} signedIn={Boolean(user)} role={profile?.role} />
@@ -50,12 +47,9 @@ export function SiteHeader() {
       </div>
       {open ? (
         <div className="space-y-3 border-t border-line px-4 py-4 md:hidden">
-          <Link to="/search" className="block py-2" onClick={() => setOpen(false)}>
-            Stays
-          </Link>
-          <Link to="/list" className="block py-2" onClick={() => setOpen(false)}>
-            List your space
-          </Link>
+          <Link to="/search" className="block py-2" onClick={() => setOpen(false)}>Stays</Link>
+          <Link to="/host" className="block py-2" onClick={() => setOpen(false)}>List your property</Link>
+          <Link to="/signup" className="block py-2" onClick={() => setOpen(false)}>Sign up</Link>
           <AuthLinks pending={isPending} signedIn={Boolean(user)} role={profile?.role} />
         </div>
       ) : null}
@@ -79,11 +73,8 @@ function AuthLinks({
         <Link to="/login" className="inline-flex h-11 items-center rounded-button px-3 text-sm font-medium text-ink">
           Sign in
         </Link>
-        <Link
-          to="/signup"
-          className="inline-flex h-11 items-center rounded-button bg-primary px-4 text-sm font-medium text-surface hover:bg-primary-hover"
-        >
-          Create account
+        <Link to="/signup" className="inline-flex h-11 items-center rounded-button bg-primary px-4 text-sm font-medium text-surface hover:bg-primary-hover">
+          Sign up
         </Link>
       </div>
     );
@@ -94,14 +85,10 @@ function AuthLinks({
         Trips
       </Link>
       {role === "OWNER" || role === "ADMIN" ? (
-        <Link to="/host" className="text-sm font-medium text-ink hover:text-primary">
-          Host
-        </Link>
+        <Link to="/host/dashboard" className="text-sm font-medium text-ink hover:text-primary">Host</Link>
       ) : null}
       {role === "ADMIN" ? (
-        <Link to="/admin" className="text-sm font-medium text-primary">
-          Operator
-        </Link>
+        <Link to="/admin" className="text-sm font-medium text-primary">Admin</Link>
       ) : null}
       <UserButton />
     </div>
@@ -128,10 +115,9 @@ export function SiteFooter() {
         <div className="text-sm">
           <p className="font-medium">Host</p>
           <ul className="mt-3 space-y-2 text-muted">
-            <li><Link to="/list" className="hover:text-ink">List your space</Link></li>
-            <li><Link to="/host" className="hover:text-ink">Host desk</Link></li>
-            <li><Link to="/status" className="hover:text-ink">Database status</Link></li>
-            <li><span className="text-muted">English · prices in the listing currency</span></li>
+            <li><Link to="/host" className="hover:text-ink">List your property</Link></li>
+            <li><Link to="/signup" className="hover:text-ink">Sign up</Link></li>
+            <li><Link to="/login" className="hover:text-ink">Sign in</Link></li>
           </ul>
         </div>
       </div>

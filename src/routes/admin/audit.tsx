@@ -18,10 +18,10 @@ function AuditPage() {
   }, []);
   return (
     <>
-      <PageIntro title="Audit log" body="Operator decisions are written here: listing review, fee changes, payouts, refunds, and verification." />
+      <PageIntro title="Audit log" body="Listing decisions, fee changes, payouts, and account changes are written here." />
       {error ? <EmptyState title="Audit log didn't load" body={error} /> : null}
       {!rows && !error ? <Skeleton className="h-24" /> : null}
-      {rows && rows.length === 0 ? <EmptyState title="No operator actions yet" body="Approving a listing, changing a fee, or marking a payout paid will show up here." /> : null}
+      {rows && rows.length === 0 ? <EmptyState title="No actions yet" body="Approving a listing, changing a fee, or marking a payout paid will show up here." /> : null}
       <ul className="space-y-2">
         {rows?.map((row) => (
           <li key={row.id} className="rounded-card bg-surface p-4 text-sm shadow-soft">

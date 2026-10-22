@@ -1,0 +1,40 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Nestora",
+      "hasCanvas": false,
+      "bodyTextLen": 2103,
+      "bodyTextHash": "41341b043a945984c193875d9bac4d6ab49698cbbf3203206efa9c78019a7e70",
+      "bodyTextPrefix": "Skip to content Nestora Stays List your property Sign up Sign in",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Nestora",
+      "hasCanvas": false,
+      "bodyTextLen": 1778,
+      "bodyTextHash": "d2aa2727f1c1915560296c0f171bc5f858a3f586ab581cfa99cc32f81463335c",
+      "bodyTextPrefix": "Skip to content Nestora A marketplace for real rooms Find your s",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/preview.json",
+  "divergesFromBaseline": true,
+  "baselineReasons": [
+    "desktop: body text replaced (similar length, page start changed)"
+  ]
+}

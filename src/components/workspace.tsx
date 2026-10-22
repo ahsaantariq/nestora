@@ -1,13 +1,14 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import type { Role } from "@/lib/nestora/constants";
 import { roleLabel } from "@/lib/nestora/constants";
+import { sessionSecurityFn } from "@/lib/nestora/functions";
 import { useProfile } from "@/components/profile-context";
-import { Button } from "@/components/ui";
+import { SecurityPanel, TwoFactorChallenge } from "@/components/security-panel";
+import { Button, Skeleton } from "@/components/ui";
 import { Wordmark } from "@/components/site-chrome";
-import { Skeleton } from "@/components/ui";
 
 export function Workspace({
   allow,
@@ -20,6 +21,16 @@ export function Workspace({
 }) {
   const { user, isPending } = useCurrentUserState();
   const { profile, loading, error, reload } = useProfile();
+  const [gate, setGate] = useState<"ok" | "2fa" | "setup" | "unverified" | "loading">("loading");
+
+  useEffect(() => {
+    if (!profile) return;
+    let cancelled = false;
+    sessionSecurityFn()
+      .then((next) => { if (!cancelled) setGate(next.ok ? "ok" : next.reason); })
+      .catch(() => { if (!cancelled) setGate("ok"); });
+    return () => { cancelled = true; };
+  }, [profile]);
 
   if (isPending || (user && loading && !profile)) {
     return (
@@ -46,7 +57,7 @@ export function Workspace({
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="font-display text-3xl">This account is paused</h1>
         <p className="mt-3 text-sm text-muted">
-          An operator suspended it. You can still browse stays. Hosting and trips stay closed until it's restored.
+          This account is paused. You can still browse stays.
         </p>
         <Link to="/" className="mt-6 inline-flex h-11 items-center text-sm font-medium text-primary">
           Back to Nestora
@@ -58,20 +69,47 @@ export function Workspace({
     const who = allow.map((role) => roleLabel(role).toLowerCase()).join(" or ");
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="font-display text-3xl">This desk isn't open to your role</h1>
+        <h1 className="font-display text-3xl">This page isn't available</h1>
         <p className="mt-3 text-sm text-muted">
-          It is for a {who}. You're signed in as a {roleLabel(profile.role).toLowerCase()}.
+          It's for a {who}. You're signed in as a {roleLabel(profile.role).toLowerCase()}.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link to="/dashboard" className="inline-flex h-11 items-center rounded-button bg-primary px-4 text-sm font-medium text-surface">
             Your trips
           </Link>
           {profile.role === "CUSTOMER" ? (
-            <Link to="/list" className="inline-flex h-11 items-center rounded-button border border-line bg-surface px-4 text-sm font-medium">
-              List a space
+            <Link to="/host" className="inline-flex h-11 items-center rounded-button border border-line bg-surface px-4 text-sm font-medium">
+              List your property
             </Link>
           ) : null}
         </div>
+      </div>
+    );
+  }
+
+  if (gate === "loading") {
+    return (
+      <div className="mx-auto max-w-6xl space-y-4 px-4 py-10">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
+  if (gate === "unverified") {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="font-display text-3xl">Please verify your email</h1>
+        <p className="mt-3 text-sm text-muted">Open the link we sent you, then sign in again.</p>
+        <Link to="/login" className="mt-6 inline-flex h-11 items-center text-sm font-medium text-primary">Back to sign in</Link>
+      </div>
+    );
+  }
+  if (gate === "2fa") return <TwoFactorChallenge onDone={() => setGate("ok")} />;
+  if (gate === "setup") {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-10">
+        <h1 className="font-display text-3xl">Security</h1>
+        <div className="mt-6"><SecurityPanel forced /></div>
       </div>
     );
   }

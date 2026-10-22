@@ -9,6 +9,7 @@ export const Route = createFileRoute("/dashboard/notifications")({ component: No
 function NotesPage() {
   const [rows, setRows] = useState<Awaited<ReturnType<typeof loadNotes>> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reading, setReading] = useState(false);
   useEffect(() => {
     let cancelled = false;
     loadNotes()
@@ -18,8 +19,13 @@ function NotesPage() {
   }, []);
   return (
     <>
-      <PageIntro title="Notifications" body="Bookings, cancellations, refunds, approvals, and payouts land here. Email is sent only when Resend is configured." />
-      <Button variant="quiet" className="mb-4" onClick={() => readNotes().then(() => setRows((current) => current?.map((row) => ({ ...row, read_at: row.read_at ?? new Date().toISOString() })) ?? current))}>Mark all read</Button>
+      <PageIntro title="Notifications" body="Bookings, cancellations, refunds, approvals, and payouts land here." />
+      <Button variant="quiet" className="mb-4" loading={reading} loadingLabel="Saving..." onClick={() => {
+        setReading(true);
+        readNotes()
+          .then(() => setRows((current) => current?.map((row) => ({ ...row, read_at: row.read_at ?? new Date().toISOString() })) ?? current))
+          .finally(() => setReading(false));
+      }}>Mark all read</Button>
       {error ? <EmptyState title="Notifications didn't load" body={error} /> : null}
       {!rows && !error ? <Skeleton className="h-24" /> : null}
       {rows && rows.length === 0 ? <EmptyState title="No notifications" body="When something happens on your account, it will show up here." /> : null}

@@ -1,15 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { verifyStripeSignature } from "@/lib/nestora/stripe.server";
+import { stripeWebhookSecret, verifyStripeSignature } from "@/lib/nestora/stripe.server";
 import { ingestStripeEvent } from "@/lib/nestora/commerce.server";
 
 export const Route = createFileRoute("/api/stripe/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+        const secret = await stripeWebhookSecret();
         const payload = await request.text();
         if (!secret) {
-          return Response.json({ error: "STRIPE_WEBHOOK_SECRET is not set." }, { status: 500 });
+          return Response.json({ error: "Stripe webhook signing secret is not set." }, { status: 500 });
         }
         const valid = verifyStripeSignature(payload, request.headers.get("stripe-signature"), secret);
         if (!valid) return Response.json({ error: "Invalid Stripe signature." }, { status: 400 });

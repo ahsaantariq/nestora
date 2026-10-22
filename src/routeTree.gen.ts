@@ -23,12 +23,17 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminBookingsRouteImport } from './routes/admin/bookings'
 import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
+import { Route as AdminEmailRouteImport } from './routes/admin/email'
 import { Route as AdminFeesRouteImport } from './routes/admin/fees'
+import { Route as AdminIntegrationsRouteImport } from './routes/admin/integrations'
 import { Route as AdminListingsRouteImport } from './routes/admin/listings'
 import { Route as AdminOwnersRouteImport } from './routes/admin/owners'
 import { Route as AdminPaymentsRouteImport } from './routes/admin/payments'
 import { Route as AdminPayoutsRouteImport } from './routes/admin/payouts'
+import { Route as AdminPromosRouteImport } from './routes/admin/promos'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as AdminReviewsRouteImport } from './routes/admin/reviews'
+import { Route as AdminSecurityRouteImport } from './routes/admin/security'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as CheckoutBookingIdRouteImport } from './routes/checkout/$bookingId'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
@@ -37,9 +42,11 @@ import { Route as DashboardCardsRouteImport } from './routes/dashboard/cards'
 import { Route as DashboardNotificationsRouteImport } from './routes/dashboard/notifications'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard/profile'
 import { Route as DashboardSavedRouteImport } from './routes/dashboard/saved'
+import { Route as DashboardSecurityRouteImport } from './routes/dashboard/security'
 import { Route as HostIndexRouteImport } from './routes/host/index'
 import { Route as HostBookingsRouteImport } from './routes/host/bookings'
 import { Route as HostCalendarRouteImport } from './routes/host/calendar'
+import { Route as HostDashboardRouteRouteImport } from './routes/host/dashboard/route'
 import { Route as HostFeesRouteImport } from './routes/host/fees'
 import { Route as HostPayoutsRouteImport } from './routes/host/payouts'
 import { Route as HostPropertiesRouteImport } from './routes/host/properties'
@@ -49,8 +56,20 @@ import { Route as HostSettingsRouteImport } from './routes/host/settings'
 import { Route as StaySlugRouteImport } from './routes/stay/$slug'
 import { Route as TripsBookingIdRouteImport } from './routes/trips/$bookingId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiMediaUploadRouteImport } from './routes/api/media/upload'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as HostDashboardIndexRouteImport } from './routes/host/dashboard/index'
+import { Route as HostDashboardBookingsRouteImport } from './routes/host/dashboard/bookings'
+import { Route as HostDashboardCalendarRouteImport } from './routes/host/dashboard/calendar'
+import { Route as HostDashboardFeesRouteImport } from './routes/host/dashboard/fees'
+import { Route as HostDashboardPayoutsRouteImport } from './routes/host/dashboard/payouts'
+import { Route as HostDashboardPropertiesRouteImport } from './routes/host/dashboard/properties'
+import { Route as HostDashboardReviewsRouteImport } from './routes/host/dashboard/reviews'
+import { Route as HostDashboardRoomsRouteImport } from './routes/host/dashboard/rooms'
+import { Route as HostDashboardSecurityRouteImport } from './routes/host/dashboard/security'
+import { Route as HostDashboardSettingsRouteImport } from './routes/host/dashboard/settings'
 import { Route as HostListingPropertyIdRouteImport } from './routes/host/listing/$propertyId'
+import { Route as HostDashboardListingPropertyIdRouteImport } from './routes/host/dashboard/listing/$propertyId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -122,9 +141,19 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminEmailRoute = AdminEmailRouteImport.update({
+  id: '/email',
+  path: '/email',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminFeesRoute = AdminFeesRouteImport.update({
   id: '/fees',
   path: '/fees',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminListingsRoute = AdminListingsRouteImport.update({
@@ -147,9 +176,24 @@ const AdminPayoutsRoute = AdminPayoutsRouteImport.update({
   path: '/payouts',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminPromosRoute = AdminPromosRouteImport.update({
+  id: '/promos',
+  path: '/promos',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminReviewsRoute = AdminReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSecurityRoute = AdminSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -192,6 +236,11 @@ const DashboardSavedRoute = DashboardSavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardSecurityRoute = DashboardSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const HostIndexRoute = HostIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -205,6 +254,11 @@ const HostBookingsRoute = HostBookingsRouteImport.update({
 const HostCalendarRoute = HostCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => HostRouteRoute,
+} as any)
+const HostDashboardRouteRoute = HostDashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => HostRouteRoute,
 } as any)
 const HostFeesRoute = HostFeesRouteImport.update({
@@ -252,16 +306,77 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMediaUploadRoute = ApiMediaUploadRouteImport.update({
+  id: '/api/media/upload',
+  path: '/api/media/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
+} as any)
+const HostDashboardIndexRoute = HostDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardBookingsRoute = HostDashboardBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardCalendarRoute = HostDashboardCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardFeesRoute = HostDashboardFeesRouteImport.update({
+  id: '/fees',
+  path: '/fees',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardPayoutsRoute = HostDashboardPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardPropertiesRoute = HostDashboardPropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardReviewsRoute = HostDashboardReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardRoomsRoute = HostDashboardRoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardSecurityRoute = HostDashboardSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => HostDashboardRouteRoute,
+} as any)
+const HostDashboardSettingsRoute = HostDashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => HostDashboardRouteRoute,
 } as any)
 const HostListingPropertyIdRoute = HostListingPropertyIdRouteImport.update({
   id: '/listing/$propertyId',
   path: '/listing/$propertyId',
   getParentRoute: () => HostRouteRoute,
 } as any)
+const HostDashboardListingPropertyIdRoute =
+  HostDashboardListingPropertyIdRouteImport.update({
+    id: '/listing/$propertyId',
+    path: '/listing/$propertyId',
+    getParentRoute: () => HostDashboardRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -274,15 +389,21 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
+  '/host/dashboard': typeof HostDashboardRouteRouteWithChildren
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/email': typeof AdminEmailRoute
   '/admin/fees': typeof AdminFeesRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/listings': typeof AdminListingsRoute
   '/admin/owners': typeof AdminOwnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/promos': typeof AdminPromosRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/api/health': typeof ApiHealthRoute
   '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -290,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/saved': typeof DashboardSavedRoute
+  '/dashboard/security': typeof DashboardSecurityRoute
   '/host/bookings': typeof HostBookingsRoute
   '/host/calendar': typeof HostCalendarRoute
   '/host/fees': typeof HostFeesRoute
@@ -304,8 +426,20 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/host/': typeof HostIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/media/upload': typeof ApiMediaUploadRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/host/dashboard/bookings': typeof HostDashboardBookingsRoute
+  '/host/dashboard/calendar': typeof HostDashboardCalendarRoute
+  '/host/dashboard/fees': typeof HostDashboardFeesRoute
+  '/host/dashboard/payouts': typeof HostDashboardPayoutsRoute
+  '/host/dashboard/properties': typeof HostDashboardPropertiesRoute
+  '/host/dashboard/reviews': typeof HostDashboardReviewsRoute
+  '/host/dashboard/rooms': typeof HostDashboardRoomsRoute
+  '/host/dashboard/security': typeof HostDashboardSecurityRoute
+  '/host/dashboard/settings': typeof HostDashboardSettingsRoute
   '/host/listing/$propertyId': typeof HostListingPropertyIdRoute
+  '/host/dashboard/': typeof HostDashboardIndexRoute
+  '/host/dashboard/listing/$propertyId': typeof HostDashboardListingPropertyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -318,12 +452,17 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/email': typeof AdminEmailRoute
   '/admin/fees': typeof AdminFeesRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/listings': typeof AdminListingsRoute
   '/admin/owners': typeof AdminOwnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/promos': typeof AdminPromosRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/api/health': typeof ApiHealthRoute
   '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -331,6 +470,7 @@ export interface FileRoutesByTo {
   '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/saved': typeof DashboardSavedRoute
+  '/dashboard/security': typeof DashboardSecurityRoute
   '/host/bookings': typeof HostBookingsRoute
   '/host/calendar': typeof HostCalendarRoute
   '/host/fees': typeof HostFeesRoute
@@ -345,8 +485,20 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/host': typeof HostIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/media/upload': typeof ApiMediaUploadRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/host/dashboard/bookings': typeof HostDashboardBookingsRoute
+  '/host/dashboard/calendar': typeof HostDashboardCalendarRoute
+  '/host/dashboard/fees': typeof HostDashboardFeesRoute
+  '/host/dashboard/payouts': typeof HostDashboardPayoutsRoute
+  '/host/dashboard/properties': typeof HostDashboardPropertiesRoute
+  '/host/dashboard/reviews': typeof HostDashboardReviewsRoute
+  '/host/dashboard/rooms': typeof HostDashboardRoomsRoute
+  '/host/dashboard/security': typeof HostDashboardSecurityRoute
+  '/host/dashboard/settings': typeof HostDashboardSettingsRoute
   '/host/listing/$propertyId': typeof HostListingPropertyIdRoute
+  '/host/dashboard': typeof HostDashboardIndexRoute
+  '/host/dashboard/listing/$propertyId': typeof HostDashboardListingPropertyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -360,15 +512,21 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
+  '/host/dashboard': typeof HostDashboardRouteRouteWithChildren
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/email': typeof AdminEmailRoute
   '/admin/fees': typeof AdminFeesRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/listings': typeof AdminListingsRoute
   '/admin/owners': typeof AdminOwnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/promos': typeof AdminPromosRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/api/health': typeof ApiHealthRoute
   '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/dashboard/bookings': typeof DashboardBookingsRoute
@@ -376,6 +534,7 @@ export interface FileRoutesById {
   '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/saved': typeof DashboardSavedRoute
+  '/dashboard/security': typeof DashboardSecurityRoute
   '/host/bookings': typeof HostBookingsRoute
   '/host/calendar': typeof HostCalendarRoute
   '/host/fees': typeof HostFeesRoute
@@ -390,8 +549,20 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/host/': typeof HostIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/media/upload': typeof ApiMediaUploadRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/host/dashboard/bookings': typeof HostDashboardBookingsRoute
+  '/host/dashboard/calendar': typeof HostDashboardCalendarRoute
+  '/host/dashboard/fees': typeof HostDashboardFeesRoute
+  '/host/dashboard/payouts': typeof HostDashboardPayoutsRoute
+  '/host/dashboard/properties': typeof HostDashboardPropertiesRoute
+  '/host/dashboard/reviews': typeof HostDashboardReviewsRoute
+  '/host/dashboard/rooms': typeof HostDashboardRoomsRoute
+  '/host/dashboard/security': typeof HostDashboardSecurityRoute
+  '/host/dashboard/settings': typeof HostDashboardSettingsRoute
   '/host/listing/$propertyId': typeof HostListingPropertyIdRoute
+  '/host/dashboard/': typeof HostDashboardIndexRoute
+  '/host/dashboard/listing/$propertyId': typeof HostDashboardListingPropertyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -406,15 +577,21 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/status'
+    | '/host/dashboard'
     | '/admin/audit'
     | '/admin/bookings'
     | '/admin/customers'
+    | '/admin/email'
     | '/admin/fees'
+    | '/admin/integrations'
     | '/admin/listings'
     | '/admin/owners'
     | '/admin/payments'
     | '/admin/payouts'
+    | '/admin/promos'
     | '/admin/reports'
+    | '/admin/reviews'
+    | '/admin/security'
     | '/api/health'
     | '/checkout/$bookingId'
     | '/dashboard/bookings'
@@ -422,6 +599,7 @@ export interface FileRouteTypes {
     | '/dashboard/notifications'
     | '/dashboard/profile'
     | '/dashboard/saved'
+    | '/dashboard/security'
     | '/host/bookings'
     | '/host/calendar'
     | '/host/fees'
@@ -436,8 +614,20 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/host/'
     | '/api/auth/$'
+    | '/api/media/upload'
     | '/api/stripe/webhook'
+    | '/host/dashboard/bookings'
+    | '/host/dashboard/calendar'
+    | '/host/dashboard/fees'
+    | '/host/dashboard/payouts'
+    | '/host/dashboard/properties'
+    | '/host/dashboard/reviews'
+    | '/host/dashboard/rooms'
+    | '/host/dashboard/security'
+    | '/host/dashboard/settings'
     | '/host/listing/$propertyId'
+    | '/host/dashboard/'
+    | '/host/dashboard/listing/$propertyId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -450,12 +640,17 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/bookings'
     | '/admin/customers'
+    | '/admin/email'
     | '/admin/fees'
+    | '/admin/integrations'
     | '/admin/listings'
     | '/admin/owners'
     | '/admin/payments'
     | '/admin/payouts'
+    | '/admin/promos'
     | '/admin/reports'
+    | '/admin/reviews'
+    | '/admin/security'
     | '/api/health'
     | '/checkout/$bookingId'
     | '/dashboard/bookings'
@@ -463,6 +658,7 @@ export interface FileRouteTypes {
     | '/dashboard/notifications'
     | '/dashboard/profile'
     | '/dashboard/saved'
+    | '/dashboard/security'
     | '/host/bookings'
     | '/host/calendar'
     | '/host/fees'
@@ -477,8 +673,20 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/host'
     | '/api/auth/$'
+    | '/api/media/upload'
     | '/api/stripe/webhook'
+    | '/host/dashboard/bookings'
+    | '/host/dashboard/calendar'
+    | '/host/dashboard/fees'
+    | '/host/dashboard/payouts'
+    | '/host/dashboard/properties'
+    | '/host/dashboard/reviews'
+    | '/host/dashboard/rooms'
+    | '/host/dashboard/security'
+    | '/host/dashboard/settings'
     | '/host/listing/$propertyId'
+    | '/host/dashboard'
+    | '/host/dashboard/listing/$propertyId'
   id:
     | '__root__'
     | '/'
@@ -491,15 +699,21 @@ export interface FileRouteTypes {
     | '/signup'
     | '/sitemap.xml'
     | '/status'
+    | '/host/dashboard'
     | '/admin/audit'
     | '/admin/bookings'
     | '/admin/customers'
+    | '/admin/email'
     | '/admin/fees'
+    | '/admin/integrations'
     | '/admin/listings'
     | '/admin/owners'
     | '/admin/payments'
     | '/admin/payouts'
+    | '/admin/promos'
     | '/admin/reports'
+    | '/admin/reviews'
+    | '/admin/security'
     | '/api/health'
     | '/checkout/$bookingId'
     | '/dashboard/bookings'
@@ -507,6 +721,7 @@ export interface FileRouteTypes {
     | '/dashboard/notifications'
     | '/dashboard/profile'
     | '/dashboard/saved'
+    | '/dashboard/security'
     | '/host/bookings'
     | '/host/calendar'
     | '/host/fees'
@@ -521,8 +736,20 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/host/'
     | '/api/auth/$'
+    | '/api/media/upload'
     | '/api/stripe/webhook'
+    | '/host/dashboard/bookings'
+    | '/host/dashboard/calendar'
+    | '/host/dashboard/fees'
+    | '/host/dashboard/payouts'
+    | '/host/dashboard/properties'
+    | '/host/dashboard/reviews'
+    | '/host/dashboard/rooms'
+    | '/host/dashboard/security'
+    | '/host/dashboard/settings'
     | '/host/listing/$propertyId'
+    | '/host/dashboard/'
+    | '/host/dashboard/listing/$propertyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -541,6 +768,7 @@ export interface RootRouteChildren {
   StaySlugRoute: typeof StaySlugRoute
   TripsBookingIdRoute: typeof TripsBookingIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiMediaUploadRoute: typeof ApiMediaUploadRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
@@ -644,11 +872,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/email': {
+      id: '/admin/email'
+      path: '/email'
+      fullPath: '/admin/email'
+      preLoaderRoute: typeof AdminEmailRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/fees': {
       id: '/admin/fees'
       path: '/fees'
       fullPath: '/admin/fees'
       preLoaderRoute: typeof AdminFeesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/integrations': {
+      id: '/admin/integrations'
+      path: '/integrations'
+      fullPath: '/admin/integrations'
+      preLoaderRoute: typeof AdminIntegrationsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/listings': {
@@ -679,11 +921,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPayoutsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/promos': {
+      id: '/admin/promos'
+      path: '/promos'
+      fullPath: '/admin/promos'
+      preLoaderRoute: typeof AdminPromosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/reports'
       fullPath: '/admin/reports'
       preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/reviews': {
+      id: '/admin/reviews'
+      path: '/reviews'
+      fullPath: '/admin/reviews'
+      preLoaderRoute: typeof AdminReviewsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/security': {
+      id: '/admin/security'
+      path: '/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AdminSecurityRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/api/health': {
@@ -742,6 +1005,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSavedRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/security': {
+      id: '/dashboard/security'
+      path: '/security'
+      fullPath: '/dashboard/security'
+      preLoaderRoute: typeof DashboardSecurityRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/host/': {
       id: '/host/'
       path: '/'
@@ -761,6 +1031,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/host/calendar'
       preLoaderRoute: typeof HostCalendarRouteImport
+      parentRoute: typeof HostRouteRoute
+    }
+    '/host/dashboard': {
+      id: '/host/dashboard'
+      path: '/dashboard'
+      fullPath: '/host/dashboard'
+      preLoaderRoute: typeof HostDashboardRouteRouteImport
       parentRoute: typeof HostRouteRoute
     }
     '/host/fees': {
@@ -826,12 +1103,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/media/upload': {
+      id: '/api/media/upload'
+      path: '/api/media/upload'
+      fullPath: '/api/media/upload'
+      preLoaderRoute: typeof ApiMediaUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/host/dashboard/': {
+      id: '/host/dashboard/'
+      path: '/'
+      fullPath: '/host/dashboard/'
+      preLoaderRoute: typeof HostDashboardIndexRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/bookings': {
+      id: '/host/dashboard/bookings'
+      path: '/bookings'
+      fullPath: '/host/dashboard/bookings'
+      preLoaderRoute: typeof HostDashboardBookingsRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/calendar': {
+      id: '/host/dashboard/calendar'
+      path: '/calendar'
+      fullPath: '/host/dashboard/calendar'
+      preLoaderRoute: typeof HostDashboardCalendarRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/fees': {
+      id: '/host/dashboard/fees'
+      path: '/fees'
+      fullPath: '/host/dashboard/fees'
+      preLoaderRoute: typeof HostDashboardFeesRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/payouts': {
+      id: '/host/dashboard/payouts'
+      path: '/payouts'
+      fullPath: '/host/dashboard/payouts'
+      preLoaderRoute: typeof HostDashboardPayoutsRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/properties': {
+      id: '/host/dashboard/properties'
+      path: '/properties'
+      fullPath: '/host/dashboard/properties'
+      preLoaderRoute: typeof HostDashboardPropertiesRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/reviews': {
+      id: '/host/dashboard/reviews'
+      path: '/reviews'
+      fullPath: '/host/dashboard/reviews'
+      preLoaderRoute: typeof HostDashboardReviewsRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/rooms': {
+      id: '/host/dashboard/rooms'
+      path: '/rooms'
+      fullPath: '/host/dashboard/rooms'
+      preLoaderRoute: typeof HostDashboardRoomsRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/security': {
+      id: '/host/dashboard/security'
+      path: '/security'
+      fullPath: '/host/dashboard/security'
+      preLoaderRoute: typeof HostDashboardSecurityRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
+    '/host/dashboard/settings': {
+      id: '/host/dashboard/settings'
+      path: '/settings'
+      fullPath: '/host/dashboard/settings'
+      preLoaderRoute: typeof HostDashboardSettingsRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
     }
     '/host/listing/$propertyId': {
       id: '/host/listing/$propertyId'
@@ -840,6 +1194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostListingPropertyIdRouteImport
       parentRoute: typeof HostRouteRoute
     }
+    '/host/dashboard/listing/$propertyId': {
+      id: '/host/dashboard/listing/$propertyId'
+      path: '/listing/$propertyId'
+      fullPath: '/host/dashboard/listing/$propertyId'
+      preLoaderRoute: typeof HostDashboardListingPropertyIdRouteImport
+      parentRoute: typeof HostDashboardRouteRoute
+    }
   }
 }
 
@@ -847,12 +1208,17 @@ interface AdminRouteRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminEmailRoute: typeof AdminEmailRoute
   AdminFeesRoute: typeof AdminFeesRoute
+  AdminIntegrationsRoute: typeof AdminIntegrationsRoute
   AdminListingsRoute: typeof AdminListingsRoute
   AdminOwnersRoute: typeof AdminOwnersRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPayoutsRoute: typeof AdminPayoutsRoute
+  AdminPromosRoute: typeof AdminPromosRoute
   AdminReportsRoute: typeof AdminReportsRoute
+  AdminReviewsRoute: typeof AdminReviewsRoute
+  AdminSecurityRoute: typeof AdminSecurityRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -860,12 +1226,17 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminEmailRoute: AdminEmailRoute,
   AdminFeesRoute: AdminFeesRoute,
+  AdminIntegrationsRoute: AdminIntegrationsRoute,
   AdminListingsRoute: AdminListingsRoute,
   AdminOwnersRoute: AdminOwnersRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPayoutsRoute: AdminPayoutsRoute,
+  AdminPromosRoute: AdminPromosRoute,
   AdminReportsRoute: AdminReportsRoute,
+  AdminReviewsRoute: AdminReviewsRoute,
+  AdminSecurityRoute: AdminSecurityRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -879,6 +1250,7 @@ interface DashboardRouteRouteChildren {
   DashboardNotificationsRoute: typeof DashboardNotificationsRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardSavedRoute: typeof DashboardSavedRoute
+  DashboardSecurityRoute: typeof DashboardSecurityRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
@@ -888,6 +1260,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardNotificationsRoute: DashboardNotificationsRoute,
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardSavedRoute: DashboardSavedRoute,
+  DashboardSecurityRoute: DashboardSecurityRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
@@ -895,7 +1268,39 @@ const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
   DashboardRouteRouteChildren,
 )
 
+interface HostDashboardRouteRouteChildren {
+  HostDashboardBookingsRoute: typeof HostDashboardBookingsRoute
+  HostDashboardCalendarRoute: typeof HostDashboardCalendarRoute
+  HostDashboardFeesRoute: typeof HostDashboardFeesRoute
+  HostDashboardPayoutsRoute: typeof HostDashboardPayoutsRoute
+  HostDashboardPropertiesRoute: typeof HostDashboardPropertiesRoute
+  HostDashboardReviewsRoute: typeof HostDashboardReviewsRoute
+  HostDashboardRoomsRoute: typeof HostDashboardRoomsRoute
+  HostDashboardSecurityRoute: typeof HostDashboardSecurityRoute
+  HostDashboardSettingsRoute: typeof HostDashboardSettingsRoute
+  HostDashboardIndexRoute: typeof HostDashboardIndexRoute
+  HostDashboardListingPropertyIdRoute: typeof HostDashboardListingPropertyIdRoute
+}
+
+const HostDashboardRouteRouteChildren: HostDashboardRouteRouteChildren = {
+  HostDashboardBookingsRoute: HostDashboardBookingsRoute,
+  HostDashboardCalendarRoute: HostDashboardCalendarRoute,
+  HostDashboardFeesRoute: HostDashboardFeesRoute,
+  HostDashboardPayoutsRoute: HostDashboardPayoutsRoute,
+  HostDashboardPropertiesRoute: HostDashboardPropertiesRoute,
+  HostDashboardReviewsRoute: HostDashboardReviewsRoute,
+  HostDashboardRoomsRoute: HostDashboardRoomsRoute,
+  HostDashboardSecurityRoute: HostDashboardSecurityRoute,
+  HostDashboardSettingsRoute: HostDashboardSettingsRoute,
+  HostDashboardIndexRoute: HostDashboardIndexRoute,
+  HostDashboardListingPropertyIdRoute: HostDashboardListingPropertyIdRoute,
+}
+
+const HostDashboardRouteRouteWithChildren =
+  HostDashboardRouteRoute._addFileChildren(HostDashboardRouteRouteChildren)
+
 interface HostRouteRouteChildren {
+  HostDashboardRouteRoute: typeof HostDashboardRouteRouteWithChildren
   HostBookingsRoute: typeof HostBookingsRoute
   HostCalendarRoute: typeof HostCalendarRoute
   HostFeesRoute: typeof HostFeesRoute
@@ -909,6 +1314,7 @@ interface HostRouteRouteChildren {
 }
 
 const HostRouteRouteChildren: HostRouteRouteChildren = {
+  HostDashboardRouteRoute: HostDashboardRouteRouteWithChildren,
   HostBookingsRoute: HostBookingsRoute,
   HostCalendarRoute: HostCalendarRoute,
   HostFeesRoute: HostFeesRoute,
@@ -941,6 +1347,7 @@ const rootRouteChildren: RootRouteChildren = {
   StaySlugRoute: StaySlugRoute,
   TripsBookingIdRoute: TripsBookingIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiMediaUploadRoute: ApiMediaUploadRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport

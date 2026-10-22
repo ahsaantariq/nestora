@@ -56,7 +56,7 @@ export const BOOKING_STATUSES = [
 ] as const;
 
 export function roleLabel(role: Role): string {
-  if (role === "ADMIN") return "Operator";
+  if (role === "ADMIN") return "Admin";
   if (role === "OWNER") return "Host";
   return "Guest";
 }

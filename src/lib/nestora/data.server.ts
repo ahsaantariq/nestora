@@ -1,6 +1,7 @@
 import { getSql } from "@/lib/db";
 import { AMENITIES, type PropertyType, type Role } from "./constants.ts";
 import { adminEmailsFromEnv, roleAfterSignIn } from "./admin-email.ts";
+import { ensureDemoCatalog } from "./demo.server.ts";
 import { ownerNet } from "@/lib/domain/pricing.ts";
 
 const AMENITY_SET = new Set<string>(AMENITIES);
@@ -8,12 +9,16 @@ const AMENITY_SET = new Set<string>(AMENITIES);
 export type Profile = {
   userId: string;
   email: string;
+  emailVerified: boolean;
   displayName: string;
   phone: string | null;
   role: Role;
-  accountStatus: "ACTIVE" | "SUSPENDED";
+  accountStatus: "ACTIVE" | "SUSPENDED" | "DEACTIVATED";
   ownerStatus: "NONE" | "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
   ownerNote: string | null;
+  maxProperties: number | null;
+  totpEnabled: boolean;
+  businessName: string | null;
 };
 
 export type RefundRuleView = { minHoursBeforeCheckIn: number; refundBps: number };
@@ -79,12 +84,16 @@ export type SearchInput = {
 type ProfileRow = {
   user_id: string;
   email: string;
+  email_verified: boolean;
   display_name: string;
   phone: string | null;
   role: string;
   account_status: string;
   owner_status: string;
   owner_note: string | null;
+  max_properties: number | null;
+  totp_enabled: boolean | null;
+  business_name: string | null;
 };
 
 const buckets = new Map<string, number[]>();
@@ -107,10 +116,14 @@ function mapProfile(row: ProfileRow): Profile {
   return {
     userId: row.user_id,
     email: row.email,
+    emailVerified: Boolean(row.email_verified),
     displayName: row.display_name,
     phone: row.phone,
     role: asRole(row.role),
-    accountStatus: row.account_status === "SUSPENDED" ? "SUSPENDED" : "ACTIVE",
+    accountStatus:
+      row.account_status === "SUSPENDED" || row.account_status === "DEACTIVATED"
+        ? row.account_status
+        : "ACTIVE",
     ownerStatus:
       row.owner_status === "PENDING" ||
       row.owner_status === "APPROVED" ||
@@ -119,16 +132,21 @@ function mapProfile(row: ProfileRow): Profile {
         ? row.owner_status
         : "NONE",
     ownerNote: row.owner_note,
+    maxProperties: row.max_properties == null ? null : Number(row.max_properties),
+    totpEnabled: Boolean(row.totp_enabled),
+    businessName: row.business_name,
   };
 }
 
 async function readProfile(userId: string): Promise<Profile> {
   const sql = await getSql();
   const rows = await sql<ProfileRow>`
-    select p.user_id, u.email, p.display_name, p.phone, p.role, p.account_status,
-           p.owner_status, p.owner_note
+    select p.user_id, u.email, u."emailVerified" as email_verified, p.display_name, p.phone, p.role, p.account_status,
+           p.owner_status, p.owner_note, p.max_properties, p.business_name,
+           coalesce(s.totp_enabled, false) as totp_enabled
     from profiles p
     join "user" u on u.id = p.user_id
+    left join user_security s on s.user_id = p.user_id
     where p.user_id = ${userId}
   `;
   const row = rows[0];
@@ -150,6 +168,34 @@ export async function loadOrCreateProfile(userId: string): Promise<Profile> {
     on conflict (user_id) do nothing
   `;
 
+  const intent = await sql<{ kind: string; payload: Record<string, unknown> | string }>`
+    select kind, payload from signup_intents where lower(email) = lower(${user.email})
+  `;
+  const pending = intent[0];
+  if (pending && pending.kind === "OWNER") {
+    const payload = typeof pending.payload === "string" ? JSON.parse(pending.payload) as Record<string, unknown> : pending.payload ?? {};
+    const text = (key: string) => (typeof payload[key] === "string" ? String(payload[key]) : null);
+    await sql`
+      update profiles set
+        role = 'OWNER',
+        owner_status = 'APPROVED',
+        phone = coalesce(${text("phone")}, phone),
+        business_name = ${text("businessName")},
+        country = ${text("country")},
+        city = ${text("city")},
+        signup_property_type = ${text("propertyType")},
+        signup_property_count = ${typeof payload.propertyCount === "number" ? payload.propertyCount : null},
+        updated_at = now()
+      where user_id = ${userId} and role <> 'ADMIN'
+    `;
+    await sql`delete from signup_intents where lower(email) = lower(${user.email})`;
+  }
+
+  const admins = adminEmailsFromEnv(process.env);
+  if (admins.includes(user.email.trim().toLowerCase())) {
+    await sql`update "user" set "emailVerified" = true where id = ${userId}`;
+  }
+
   const current = await readProfile(userId);
   const nextRole = roleAfterSignIn({
     email: user.email,
@@ -169,8 +215,8 @@ export async function loadOrCreateProfile(userId: string): Promise<Profile> {
 
 export async function requireActive(userId: string, roles?: Role[]): Promise<Profile> {
   const profile = await loadOrCreateProfile(userId);
-  if (profile.accountStatus === "SUSPENDED") {
-    throw new Error("This account is suspended.");
+  if (profile.accountStatus === "SUSPENDED" || profile.accountStatus === "DEACTIVATED") {
+    throw new Error(profile.accountStatus === "DEACTIVATED" ? "This account is closed." : "This account is suspended.");
   }
   if (roles && !roles.includes(profile.role)) {
     throw new Error("You don't have access to that.");
@@ -338,6 +384,7 @@ function mapCard(row: CardRow): StayCard {
 }
 
 export async function searchStays(input: SearchInput): Promise<StayCard[]> {
+  await ensureDemoCatalog();
   const sql = await getSql();
   const where = ["p.status = 'LIVE'"];
   const params: unknown[] = [];
@@ -499,24 +546,18 @@ export async function adminSummary(userId: string) {
   return { ...rows[0]! };
 }
 
-export type PersonRow = {
-  userId: string;
-  email: string;
-  displayName: string;
-  role: Role;
-  accountStatus: "ACTIVE" | "SUSPENDED";
-  ownerStatus: Profile["ownerStatus"];
-  ownerNote: string | null;
-};
+export type PersonRow = Profile;
 
 export async function listPeople(actorId: string): Promise<PersonRow[]> {
   await requireActive(actorId, ["ADMIN"]);
   const sql = await getSql();
   const rows = await sql<ProfileRow>`
-    select p.user_id, u.email, p.display_name, p.phone, p.role, p.account_status,
-           p.owner_status, p.owner_note
+    select p.user_id, u.email, u."emailVerified" as email_verified, p.display_name, p.phone, p.role, p.account_status,
+           p.owner_status, p.owner_note, p.max_properties, p.business_name,
+           coalesce(s.totp_enabled, false) as totp_enabled
     from profiles p
     join "user" u on u.id = p.user_id
+    left join user_security s on s.user_id = p.user_id
     order by p.created_at desc
   `;
   return rows.map(mapProfile);

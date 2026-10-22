@@ -16,6 +16,11 @@ export const Route = createFileRoute("/admin")({
             <DeskLink to="/admin/payments">Payments</DeskLink>
             <DeskLink to="/admin/payouts">Payouts</DeskLink>
             <DeskLink to="/admin/fees">Fees & settings</DeskLink>
+            <DeskLink to="/admin/integrations">Integrations</DeskLink>
+            <DeskLink to="/admin/email">Email log</DeskLink>
+            <DeskLink to="/admin/reviews">Reviews</DeskLink>
+            <DeskLink to="/admin/promos">Promo codes</DeskLink>
+            <DeskLink to="/admin/security">Security</DeskLink>
             <DeskLink to="/admin/audit">Audit log</DeskLink>
             <DeskLink to="/admin/reports">Reports</DeskLink>
           </>

@@ -41,7 +41,7 @@ function ProfilePage() {
   if (!profile) return null;
   return (
     <>
-      <PageIntro title="Profile" body="This is the name hosts and operators see. Your email comes from your sign-in and isn't edited here." />
+      <PageIntro title="Profile" body="This is the name hosts see. Your email comes from your sign-in and isn't edited here." />
       <form onSubmit={onSubmit} className="max-w-md space-y-4 rounded-card bg-surface p-5 shadow-soft">
         <p className="text-sm text-muted">{profile.email} · {roleLabel(profile.role)}</p>
         <label className="block text-sm">
@@ -54,7 +54,7 @@ function ProfilePage() {
         </label>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         {saved ? <p className="text-sm text-success">Saved.</p> : null}
-        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save profile"}</Button>
+        <Button type="submit" loading={pending} loadingLabel="Saving...">Save profile</Button>
       </form>
     </>
   );

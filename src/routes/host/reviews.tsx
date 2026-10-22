@@ -1,14 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PageIntro } from "@/components/workspace";
-import { EmptyState } from "@/components/ui";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/host/reviews")({
-  component: function ReviewsPage() {
-    return (
-      <>
-        <PageIntro title="Reviews" body="A guest can review after a completed stay. Scores are an average of those reviews, not a starting rating." />
-        <EmptyState title="No reviews" body="None of your stays have a review yet." />
-      </>
-    );
+  beforeLoad: () => {
+    throw redirect({ to: "/host/dashboard/reviews" });
   },
 });

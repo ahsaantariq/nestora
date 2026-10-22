@@ -77,7 +77,7 @@ function Home() {
       <section className="mx-auto mt-16 max-w-6xl px-4">
         <h2 className="font-display text-3xl">Live stays</h2>
         <p className="mt-2 max-w-xl text-sm text-muted">
-          Only listings an operator has approved show up here. Nothing on this page is invented.
+          Approved stays you can book today.
         </p>
         <div className="mt-6">
           {stays == null && !error ? (
@@ -93,8 +93,8 @@ function Home() {
               title="No live stays yet"
               body="When a host lists a space and it is approved, it will show here with its real price and city."
               action={
-                <Link to="/list" className="inline-flex h-11 items-center rounded-button bg-primary px-4 text-sm font-medium text-surface">
-                  List your space
+                <Link to="/host" className="inline-flex h-11 items-center rounded-button bg-primary px-4 text-sm font-medium text-surface">
+                  List your property
                 </Link>
               }
             />
@@ -102,11 +102,14 @@ function Home() {
           {stays && stays.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {stays.map((stay) => (
-                <Link key={stay.id} to="/stay/$slug" params={{ slug: stay.slug }} className="rounded-card bg-surface p-5 shadow-soft">
-                  <p className="text-xs font-medium uppercase tracking-wide text-primary">{stay.propertyType.toLowerCase()}</p>
-                  <h3 className="mt-2 font-display text-2xl">{stay.title}</h3>
-                  <p className="mt-2 text-sm text-muted">{[stay.city, stay.region, stay.country].filter(Boolean).join(", ")}</p>
-                  <p className="mt-4 text-sm font-medium tabular-nums">{formatMoney(stay.nightlyCents)} / night</p>
+                <Link key={stay.id} to="/stay/$slug" params={{ slug: stay.slug }} className="overflow-hidden rounded-card bg-surface shadow-soft">
+                  {stay.coverUrl ? <img src={stay.coverUrl} alt="" className="h-40 w-full object-cover" /> : <div className="h-40 bg-primary/10" />}
+                  <div className="p-5">
+                    <p className="text-xs font-medium uppercase tracking-wide text-primary">{stay.propertyType.toLowerCase()}</p>
+                    <h3 className="mt-2 font-display text-2xl">{stay.title}</h3>
+                    <p className="mt-2 text-sm text-muted">{[stay.city, stay.region, stay.country].filter(Boolean).join(", ")}</p>
+                    <p className="mt-4 text-sm font-medium tabular-nums">{formatMoney(stay.nightlyCents)} / night</p>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -117,7 +120,7 @@ function Home() {
       <section className="mx-auto mt-16 max-w-6xl px-4">
         <h2 className="font-display text-3xl">Places with a live stay</h2>
         {places && places.length === 0 ? (
-          <p className="mt-3 max-w-xl text-sm text-muted">Cities show up here only after a listing in that city is approved. Nothing is invented.</p>
+          <p className="mt-3 max-w-xl text-sm text-muted">Cities appear here once a stay in that city is live.</p>
         ) : null}
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {places?.map((place) => (
@@ -132,12 +135,12 @@ function Home() {
       <section className="mx-auto mt-16 grid max-w-6xl gap-6 px-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-card bg-primary p-8 text-surface">
           <h2 className="font-display text-4xl">List your space</h2>
-          <p className="mt-3 max-w-md text-surface/85">Hosts draft the place, the price, and the rules. An operator approves it before it can be booked.</p>
-          <Link to="/list" className="mt-6 inline-flex h-11 items-center rounded-button bg-surface px-4 text-sm font-medium text-primary">Start a listing</Link>
+          <p className="mt-3 max-w-md text-surface/85">Draft the place, the price, and the rules. Nestora reviews it before guests can book.</p>
+          <Link to="/host" className="mt-6 inline-flex h-11 items-center rounded-button bg-surface px-4 text-sm font-medium text-primary">List your property</Link>
         </div>
         <div className="space-y-4">
           {[
-            ["Approved before it is public", "A listing stays a draft until an operator says it can go live."],
+            ["Approved before it is public", "A listing stays a draft until Nestora approves it."],
             ["The price is the price", "Nightly total, fees, and tax are shown before anyone pays."],
             ["Cards stay with the card network", "Nestora never stores a card number."],
           ].map(([title, body]) => (
@@ -153,10 +156,10 @@ function Home() {
         <h2 className="font-display text-3xl">Questions</h2>
         <dl className="mt-6 grid gap-4 md:grid-cols-2">
           {[
-            ["Who becomes the operator?", "Only the email in ADMIN_EMAIL. Signing up first does not make you an operator."],
-            ["When can I review a stay?", "After that booking is marked completed. The host can reply. An operator can hide a review."],
+            ["Who can list a property?", "Anyone can create a host account. Listings go live after Nestora reviews them."],
+            ["When can I review a stay?", "After that booking is completed. The host can reply, and Nestora can remove a review."],
             ["What if I cancel?", "The stay's policy (Flexible, Moderate, or Strict) decides the refund before you confirm."],
-            ["Where do photos go?", "Cloudinary, when those keys are set. Otherwise a host can attach an https address."],
+            ["Where do photos go?", "Upload them from your computer while you edit a listing. A 3D tour can still be a link."],
           ].map(([question, answer]) => (
             <div key={question} className="border-t border-line pt-4">
               <dt className="font-medium">{question}</dt>
@@ -170,7 +173,7 @@ function Home() {
         {[
           ["01", "Say where and when", "City, dates, adults, children, infants, and whether a pet is coming."],
           ["02", "Read the stay", "House rules, cancellation, and a price that adds the fees before you commit."],
-          ["03", "Or list one", "Hosts draft a space. An operator approves it before anyone can book."],
+          ["03", "Or list one", "Hosts draft a space. Nestora approves it before anyone can book."],
         ].map(([step, title, body]) => (
           <article key={step} className="border-t border-line pt-4">
             <p className="font-display text-2xl text-accent">{step}</p>

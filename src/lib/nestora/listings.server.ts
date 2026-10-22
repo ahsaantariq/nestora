@@ -114,10 +114,19 @@ async function owned(userId: string, propertyId: string) {
 
 export async function createListing(userId: string, propertyType: PropertyType) {
   const profile = await requireActive(userId, ["OWNER", "ADMIN"]);
-  if (profile.role !== "ADMIN" && profile.ownerStatus !== "APPROVED" && profile.role !== "OWNER") {
-    throw new Error("The operator has to approve your host desk before you can list a space.");
-  }
   const sql = await getSql();
+  const caps = await sql<{ max_properties: number | null }>`
+    select max_properties from profiles where user_id = ${profile.userId}
+  `;
+  const cap = caps[0]?.max_properties;
+  if (cap != null) {
+    const counts = await sql<{ n: number }>`
+      select count(*)::int as n from properties where owner_user_id = ${profile.userId}
+    `;
+    if ((counts[0]?.n ?? 0) >= cap) {
+      throw new Error(`This account can have up to ${cap} properties. Ask Nestora if you need a higher limit.`);
+    }
+  }
   const id = randomUUID();
   const slug = `draft-${id.slice(0, 8)}`;
   await sql`
@@ -354,15 +363,23 @@ export async function submitListing(userId: string, propertyId: string) {
   return loadOwnListing(userId, propertyId);
 }
 
-export async function addMediaUrl(userId: string, propertyId: string, url: string, kind: "IMAGE" | "VIDEO") {
-  httpsOrNull(url, kind === "IMAGE" ? "Photo" : "Video");
+export async function addMediaUrl(
+  userId: string,
+  propertyId: string,
+  url: string,
+  kind: "IMAGE" | "VIDEO",
+  publicId: string | null = null,
+) {
+  if (!url.startsWith("data:image/") && !url.startsWith("/stays/")) {
+    httpsOrNull(url, kind === "IMAGE" ? "Photo" : "Video");
+  }
   const { sql } = await owned(userId, propertyId);
   const count = await sql<{ n: number }>`select count(*)::int as n from property_media where property_id = ${propertyId}`;
   const id = randomUUID();
   const isCover = kind === "IMAGE" && (count[0]?.n ?? 0) === 0;
   await sql`
-    insert into property_media (id, property_id, kind, url, sort_order, is_cover)
-    values (${id}, ${propertyId}, ${kind}, ${url}, ${count[0]?.n ?? 0}, ${isCover})
+    insert into property_media (id, property_id, kind, url, public_id, sort_order, is_cover)
+    values (${id}, ${propertyId}, ${kind}, ${url}, ${publicId}, ${count[0]?.n ?? 0}, ${isCover})
   `;
   return loadOwnListing(userId, propertyId);
 }
@@ -431,6 +448,8 @@ export async function setCalendarDay(
 }
 
 export async function listDestinations() {
+  const { ensureDemoCatalog } = await import("./demo.server.ts");
+  await ensureDemoCatalog();
   const sql = await getSql();
   return sql<{ city: string; country: string; stays: number }>`
     select city, country, count(*)::int as stays
