@@ -5,12 +5,16 @@
  * Safe to run on every boot.
  */
 import fs from "node:fs";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { hashPassword } from "@better-auth/utils/password";
 import { pgConfig, readDbUrls } from "./pg-target.mjs";
+
+/** @param {string | undefined} bundledSeedSql */
+export function readSeedSql(bundledSeedSql) {
+  return bundledSeedSql ?? fs.readFileSync(new URL("../migrations/0003_seed.sql", import.meta.url), "utf8");
+}
 
 function adminEmail() {
   return (process.env.ADMIN_EMAIL || process.env.NESTORA_ADMIN_EMAIL || "").trim().toLowerCase();
@@ -20,7 +24,8 @@ function adminPassword() {
   return process.env.ADMIN_PASSWORD || process.env.NESTORA_ADMIN_PASSWORD || "";
 }
 
-export async function runSeed() {
+/** @param {{ seedSql?: string }} [options] */
+export async function runSeed({ seedSql: bundledSeedSql } = {}) {
   const { migrationUrl } = readDbUrls();
   if (!migrationUrl) {
     console.log(
@@ -29,7 +34,7 @@ export async function runSeed() {
     return;
   }
 
-  const seedSql = fs.readFileSync(path.join(process.cwd(), "migrations/0003_seed.sql"), "utf8");
+  const seedSql = readSeedSql(bundledSeedSql);
   const pool = new pg.Pool({ ...pgConfig(migrationUrl), max: 1 });
   const client = await pool.connect();
   try {

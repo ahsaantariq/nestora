@@ -289,10 +289,15 @@ async function ensurePostgresReady(): Promise<void> {
     const { migrationUrl } = readDbUrls();
     if (!migrationUrl) return;
     try {
+      const migrations = bundledMigrationFiles();
       const { applySqlMigrations } = await import("../../scripts/apply-migrations.mjs");
-      await applySqlMigrations({ connectionString: migrationUrl, files: bundledMigrationFiles() });
+      await applySqlMigrations({ connectionString: migrationUrl, files: migrations });
       const { runSeed } = await import("../../scripts/seed.mjs");
-      await runSeed();
+      const seedMigration = migrations.find((file) => file.name === "0003_seed.sql");
+      if (!seedMigration) {
+        throw new Error("Bundled migration 0003_seed.sql is missing.");
+      }
+      await runSeed({ seedSql: seedMigration.sql });
       globalRef.__pgBootstrapIssue__ = null;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
