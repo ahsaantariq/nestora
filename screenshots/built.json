@@ -1,0 +1,40 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Nestora",
+      "hasCanvas": false,
+      "bodyTextLen": 1359,
+      "bodyTextHash": "3222cad345a7540be50645b2bf5ac9fb31a17ddf7ea061ac730cd7abcfcd5643",
+      "bodyTextPrefix": "Skip to content Nestora Stays List your space Sign in Create acc",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Nestora",
+      "hasCanvas": false,
+      "bodyTextLen": 1163,
+      "bodyTextHash": "7cf0bb82bfe0aef08761bb2865a3effc9b6f9f35d35dcc63fc5677f9b2dd6bad",
+      "bodyTextPrefix": "Skip to content Nestora A marketplace for real rooms Find your s",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/built.json",
+  "divergesFromBaseline": true,
+  "baselineReasons": [
+    "desktop: body text changed (1208 -> 1359 chars, hash mismatch)"
+  ]
+}
