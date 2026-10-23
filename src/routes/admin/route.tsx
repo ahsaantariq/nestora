@@ -10,6 +10,10 @@ export const Route = createFileRoute("/admin")({
           <>
             <DeskLink to="/admin" exact>Overview</DeskLink>
             <DeskLink to="/admin/listings">Listing review</DeskLink>
+            <DeskLink to="/admin/pages">Pages</DeskLink>
+            <DeskLink to="/admin/faqs">FAQs</DeskLink>
+            <DeskLink to="/admin/messages">Messages</DeskLink>
+            <DeskLink to="/admin/navigation">Navigation</DeskLink>
             <DeskLink to="/admin/owners">Owners</DeskLink>
             <DeskLink to="/admin/customers">Customers</DeskLink>
             <DeskLink to="/admin/bookings">Bookings</DeskLink>

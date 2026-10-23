@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { loadOwnerBookings } from "@/lib/nestora/functions";
 import { formatMoney } from "@/lib/domain/money";
@@ -27,8 +27,10 @@ function HostBookings() {
         {rows?.map((row) => (
           <li key={row.id} className="flex items-start justify-between gap-3 rounded-card bg-surface p-4 shadow-soft">
             <div>
-              <p className="font-medium">{row.title}</p>
-              <p className="text-sm text-muted">{row.check_in} → {row.check_out} · {formatMoney(row.total_cents)}</p>
+              <p className="font-medium"><Link to="/stay/$slug" params={{ slug: row.slug }} className="hover:text-primary">{row.title}</Link></p>
+              <p className="text-sm text-muted">{row.property_type.toLowerCase()} · {row.guest_name}</p>
+              <p className="text-sm text-muted">{row.check_in} → {row.check_out} · {row.adults + row.children + row.infants} guests · {formatMoney(row.total_cents)}</p>
+              <p className="text-sm text-muted">{row.payment_status ? `Payment ${row.payment_status.toLowerCase()}` : "Payment not started"}</p>
             </div>
             <StatusPill>{row.status.toLowerCase()}</StatusPill>
           </li>

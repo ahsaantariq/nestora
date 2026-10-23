@@ -742,7 +742,7 @@ export async function savePlatformSettings(userId: string, input: {
   return readSettings();
 }
 
-export async function decideListing(userId: string, input: { propertyId: string; decision: "APPROVE" | "REJECT"; reason: string }) {
+export async function decideListing(userId: string, input: { propertyId: string; decision: "APPROVE" | "REJECT" | "CHANGES"; reason: string }) {
   const profile = await requireActive(userId, ["ADMIN"]);
   const sql = await getSql();
   const rows = await sql<{ id: string; title: string; owner_user_id: string; email: string; email_bookings: boolean }>`
@@ -754,25 +754,35 @@ export async function decideListing(userId: string, input: { propertyId: string;
   `;
   const listing = rows[0];
   if (!listing) throw new Error("That listing is not waiting for review.");
+  const note = input.reason.trim().slice(0, 500);
   if (input.decision === "APPROVE") {
     await sql`update properties set status = 'LIVE', rejection_reason = null, updated_at = now() where id = ${listing.id}`;
+  } else if (input.decision === "CHANGES") {
+    if (!note) throw new Error("Tell the host what to change.");
+    await sql`update properties set status = 'DRAFT', rejection_reason = ${note}, updated_at = now() where id = ${listing.id}`;
   } else {
-    if (!input.reason.trim()) throw new Error("Tell the host why it was rejected.");
-    await sql`
-      update properties set status = 'REJECTED', rejection_reason = ${input.reason.trim().slice(0, 500)}, updated_at = now()
-      where id = ${listing.id}
-    `;
+    if (!note) throw new Error("Tell the host why it was rejected.");
+    await sql`update properties set status = 'REJECTED', rejection_reason = ${note}, updated_at = now() where id = ${listing.id}`;
   }
+  const copy = input.decision === "APPROVE"
+    ? { template: "listing-approved", title: `Approved: ${listing.title}`, body: "Your listing is live." }
+    : input.decision === "CHANGES"
+      ? { template: "listing-changes", title: `Changes requested: ${listing.title}`, body: note }
+      : { template: "listing-rejected", title: `Not approved: ${listing.title}`, body: note };
   await notifyUser({
     userId: listing.owner_user_id,
     email: listing.email,
     emailOn: listing.email_bookings,
-    template: input.decision === "APPROVE" ? "listing-approved" : "listing-rejected",
-    title: input.decision === "APPROVE" ? `Approved: ${listing.title}` : `Not approved: ${listing.title}`,
-    body: input.decision === "APPROVE" ? "Your listing is live." : input.reason.trim(),
-    href: "/host/properties",
+    template: copy.template,
+    title: copy.title,
+    body: copy.body,
+    href: "/host/dashboard/properties",
   });
-  await audit(profile.userId, `listing.${input.decision.toLowerCase()}`, listing.id, { reason: input.reason });
+  await sql`
+    insert into listing_events (id, property_id, actor_user_id, action, note)
+    values (${randomUUID()}, ${listing.id}, ${profile.userId}, ${input.decision}, ${note})
+  `;
+  await audit(profile.userId, `listing.${input.decision.toLowerCase()}`, listing.id, { reason: note });
   return { ok: true as const };
 }
 

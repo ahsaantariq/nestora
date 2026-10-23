@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { PROPERTY_TYPES, AMENITIES } from "@/lib/nestora/constants";
 import { createListingFn, loadListing, saveListingFn, submitListingFn } from "@/lib/nestora/functions";
 import { formatMoney } from "@/lib/domain/money";
@@ -34,7 +35,9 @@ function ListingPage() {
   const [saving, setSaving] = useState(false);
   const [starting, setStarting] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const dirty = useRef(false);
+  const [dirty, setDirty] = useState(false);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ title?: string; city?: string; country?: string; price?: string; photos?: string; step?: number }>({});
 
   useEffect(() => {
     if (propertyId === "new") return;
@@ -46,17 +49,14 @@ function ListingPage() {
   }, [propertyId]);
 
   useEffect(() => {
-    if (!draft || propertyId === "new" || !dirty.current) return;
-    const handle = window.setTimeout(() => {
-      dirty.current = false;
-      setSaving(true);
-      saveListingFn({ data: draft })
-        .then((next) => setDraft(next))
-        .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Save failed."))
-        .finally(() => setSaving(false));
-    }, 700);
-    return () => window.clearTimeout(handle);
-  }, [draft, propertyId]);
+    function warn(event: BeforeUnloadEvent) {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   async function start(type: "HOTEL" | "HOUSE" | "APARTMENT" | "WAREHOUSE") {
     setError(null);
@@ -101,17 +101,77 @@ function ListingPage() {
   if (!draft) return <p className="text-sm text-muted">Opening your draft…</p>;
 
   function patch(partial: Partial<Draft>) {
-    dirty.current = true;
+    setDirty(true);
     setDraft((current) => (current ? { ...current, ...partial } : current));
+  }
+
+  async function saveDraft() {
+    if (!draft || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await saveListingFn({ data: draft });
+      setDirty(false);
+      setSavedAt(new Date());
+      toast.success("Draft saved");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function leave() {
+    if (dirty && !window.confirm("You have unsaved changes. Leave this listing anyway?")) return;
+    void navigate({ to: "/host/dashboard/properties" });
+  }
+
+  async function submit() {
+    if (!draft) return;
+    const nextErrors: typeof fieldErrors = {};
+    if (!draft.title.trim() || draft.title === "Untitled stay") nextErrors.title = "Add a real title.";
+    if (!draft.city.trim()) nextErrors.city = "Add a city.";
+    if (!draft.country.trim()) nextErrors.country = "Add a country.";
+    if (draft.nightlyCents <= 0) nextErrors.price = "Add a nightly price.";
+    if (draft.media.filter((item) => item.kind === "IMAGE").length === 0) nextErrors.photos = "Add at least one photo.";
+    const stepFor = nextErrors.title ? 1 : nextErrors.city || nextErrors.country ? 2 : nextErrors.price ? 3 : nextErrors.photos ? 4 : null;
+    if (stepFor != null) {
+      setFieldErrors({ ...nextErrors, step: stepFor });
+      setStep(stepFor);
+      setError("Fill in the highlighted fields before sending this for review.");
+      document.getElementById("listing-top")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    setFieldErrors({});
+    setSubmitting(true);
+    setError(null);
+    try {
+      await saveListingFn({ data: draft });
+      await submitListingFn({ data: { id: draft.id } });
+      setDirty(false);
+      toast.success("Your listing was submitted for review. We'll email you once it's approved.");
+      await navigate({ to: "/host/dashboard/properties", search: { submitted: 1 } });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not submit.");
+      document.getElementById("listing-top")?.scrollIntoView({ behavior: "smooth" });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const cover = draft.media.find((item) => item.isCover) ?? draft.media.find((item) => item.kind === "IMAGE");
   const locked = draft.status === "PENDING_REVIEW";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
+    <div id="listing-top" className="grid gap-8 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6">
-        <PageIntro title={draft.title} body={`${draft.status.replaceAll("_", " ").toLowerCase()} · ${saving ? "Saving…" : "Saved"}`} />
+        <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-[#D9D3C7] bg-white/95 px-3 py-2 shadow-soft backdrop-blur">
+          <p className="text-sm text-muted">
+            {dirty ? "Unsaved changes" : savedAt ? `Last saved at ${savedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Saved"}
+          </p>
+          <Button type="button" loading={saving} loadingLabel="Saving..." disabled={locked} onClick={() => void saveDraft()}>Save draft</Button>
+        </div>
+        <PageIntro title={draft.title} body={draft.status.replaceAll("_", " ").toLowerCase()} />
         <ol className="flex gap-2 overflow-x-auto">
           {steps.map((label, index) => (
             <li key={label}>
@@ -132,7 +192,7 @@ function ListingPage() {
 
         {step === 1 ? (
           <FormSection title="The story">
-            <div className="md:col-span-2"><TextField label="Title" required value={draft.title} onChange={(title) => patch({ title })} /></div>
+            <div className="md:col-span-2"><TextField label="Title" required value={draft.title} error={fieldErrors.title} onChange={(title) => patch({ title })} /></div>
             <div className="md:col-span-2"><TextAreaField label="Summary" value={draft.summary} maxLength={280} onChange={(summary) => patch({ summary })} /></div>
             <div className="md:col-span-2"><TextAreaField label="Description" value={draft.description} maxLength={4000} onChange={(description) => patch({ description })} /></div>
             <NumberStepper label="Guests" value={draft.maxGuests} min={1} max={100} onChange={(maxGuests) => patch({ maxGuests })} />
@@ -190,10 +250,10 @@ function ListingPage() {
           <FormSection title="Where it is">
             <PlaceSearch onPick={(place) => patch({ addressLine: place.label.slice(0, 160), lat: place.lat, lng: place.lng })} />
             <div className="md:col-span-2"><TextField label="Street" value={draft.addressLine} onChange={(addressLine) => patch({ addressLine })} /></div>
-            <TextField label="City" required value={draft.city} onChange={(city) => patch({ city })} />
+            <TextField label="City" required value={draft.city} error={fieldErrors.city} onChange={(city) => patch({ city })} />
             <TextField label="Region" value={draft.region} onChange={(region) => patch({ region })} />
             <TextField label="Postal code" value={draft.postalCode} onChange={(postalCode) => patch({ postalCode })} />
-            <TextField label="Country" required value={draft.country} onChange={(country) => patch({ country })} />
+            <TextField label="Country" required value={draft.country} error={fieldErrors.country} onChange={(country) => patch({ country })} />
             <TextField label="Latitude" value={draft.lat == null ? "" : String(draft.lat)} onChange={(value) => patch({ lat: value === "" ? null : Number(value) })} />
             <TextField label="Longitude" value={draft.lng == null ? "" : String(draft.lng)} onChange={(value) => patch({ lng: value === "" ? null : Number(value) })} />
             <div className="md:col-span-2"><MapPin lat={draft.lat} lng={draft.lng} /></div>
@@ -202,7 +262,10 @@ function ListingPage() {
 
         {step === 3 ? (
           <FormSection title="Price and stay rules">
-            <PriceField label="Nightly" cents={draft.nightlyCents} onChange={(cents) => patch({ nightlyCents: cents ?? 0 })} />
+            <div>
+              <PriceField label="Nightly" cents={draft.nightlyCents} onChange={(cents) => patch({ nightlyCents: cents ?? 0 })} />
+              {fieldErrors.price ? <p className="mt-1 text-xs text-danger">{fieldErrors.price}</p> : null}
+            </div>
             <PriceField label="Weekend" cents={draft.weekendCents} allowEmpty hint="Leave blank to use the nightly price." onChange={(weekendCents) => patch({ weekendCents })} />
             <PriceField label="Cleaning" cents={draft.cleaningFeeCents} onChange={(cents) => patch({ cleaningFeeCents: cents ?? 0 })} />
             <PriceField label="Extra guest / night" cents={draft.extraGuestFeeCents} onChange={(cents) => patch({ extraGuestFeeCents: cents ?? 0 })} />
@@ -221,6 +284,7 @@ function ListingPage() {
 
         {step === 4 ? (
           <FormSection title="Photos and video">
+            {fieldErrors.photos ? <p className="text-sm text-danger md:col-span-2">{fieldErrors.photos}</p> : null}
             <MediaUploader
               propertyId={draft.id}
               media={draft.media}
@@ -262,14 +326,8 @@ function ListingPage() {
               type="button"
               loading={submitting}
               loadingLabel="Sending..."
-              disabled={locked}
-              onClick={() => {
-                setSubmitting(true);
-                submitListingFn({ data: { id: draft.id } })
-                  .then((next) => { setDraft(next); setError(null); })
-                  .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not submit."))
-                  .finally(() => setSubmitting(false));
-              }}
+              disabled={locked || saving}
+              onClick={() => void submit()}
             >
               Submit for review
             </Button>
@@ -279,7 +337,8 @@ function ListingPage() {
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="quiet" disabled={step === 0} onClick={() => setStep((value) => Math.max(0, value - 1))}>Back</Button>
           <Button type="button" disabled={step === steps.length - 1} onClick={() => setStep((value) => Math.min(steps.length - 1, value + 1))}>Continue</Button>
-          <Link to="/host/dashboard/properties" className="inline-flex h-11 items-center px-3 text-sm text-muted">All properties</Link>
+          <Button type="button" variant="quiet" loading={saving} loadingLabel="Saving..." disabled={locked} onClick={() => void saveDraft()}>Save draft</Button>
+          <button type="button" className="inline-flex h-11 items-center px-3 text-sm text-muted" onClick={leave}>All properties</button>
         </div>
       </div>
       <aside className="h-fit rounded-card bg-surface p-4 shadow-soft lg:sticky lg:top-20">

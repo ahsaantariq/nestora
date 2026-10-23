@@ -6,7 +6,12 @@ import { PageIntro } from "@/components/workspace";
 import { useConfirm } from "@/components/forms";
 import { Button, EmptyState, Skeleton, StatusPill } from "@/components/ui";
 
-export const Route = createFileRoute("/host/dashboard/properties")({ component: PropertiesPage });
+export const Route = createFileRoute("/host/dashboard/properties")({
+  validateSearch: (search: Record<string, unknown>): { submitted?: 1 } => (
+    search.submitted === 1 || search.submitted === "1" ? { submitted: 1 } : {}
+  ),
+  component: PropertiesPage,
+});
 
 const tone: Record<string, "muted" | "ok" | "warn" | "bad"> = {
   DRAFT: "muted",
@@ -17,6 +22,7 @@ const tone: Record<string, "muted" | "ok" | "warn" | "bad"> = {
 };
 
 function PropertiesPage() {
+  const { submitted } = Route.useSearch();
   const [rows, setRows] = useState<Awaited<ReturnType<typeof loadOwnerProperties>> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const confirm = useConfirm();
@@ -36,6 +42,11 @@ function PropertiesPage() {
   return (
     <>
       {confirm.dialog}
+      {submitted ? (
+        <p className="mb-4 rounded-[10px] border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+          Your listing was submitted for review. We'll email you once it's approved.
+        </p>
+      ) : null}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <PageIntro title="Properties" body="Draft as many places as you need. A listing goes live only after it is approved." />
         <Link to="/host/dashboard/listing/$propertyId" params={{ propertyId: "new" }} className="inline-flex h-11 items-center rounded-[10px] bg-primary px-4 text-sm font-medium text-surface">

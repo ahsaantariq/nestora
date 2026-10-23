@@ -63,6 +63,8 @@ export type StayCard = {
   avgRating: number;
   reviewCount: number;
   coverUrl: string | null;
+  photoCount: number;
+  photos: string[];
   lat: number | null;
   lng: number | null;
 };
@@ -351,6 +353,8 @@ type CardRow = {
   avg_rating: number;
   review_count: number;
   cover_url: string | null;
+  photo_count: number;
+  photo_urls: string | null;
   lat: number | null;
   lng: number | null;
 };
@@ -378,6 +382,8 @@ function mapCard(row: CardRow): StayCard {
     avgRating: Number(row.avg_rating) || 0,
     reviewCount: row.review_count,
     coverUrl: row.cover_url,
+    photoCount: Number(row.photo_count) || 0,
+    photos: row.photo_urls ? String(row.photo_urls).split("|").filter(Boolean) : [],
     lat: row.lat == null ? null : Number(row.lat),
     lng: row.lng == null ? null : Number(row.lng),
   };
@@ -429,7 +435,17 @@ export async function searchStays(input: SearchInput): Promise<StayCard[]> {
            coalesce(
              (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' and m.is_cover order by m.sort_order asc limit 1),
              (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' order by m.sort_order asc, m.created_at asc limit 1)
-           ) as cover_url
+           ) as cover_url,
+           (select count(*)::int from property_media m where m.property_id = p.id and m.kind = 'IMAGE') as photo_count,
+           (
+             select string_agg(s.url, '|' order by s.is_cover desc, s.sort_order asc)
+             from (
+               select url, is_cover, sort_order from property_media
+               where property_id = p.id and kind = 'IMAGE'
+               order by is_cover desc, sort_order asc
+               limit 8
+             ) s
+           ) as photo_urls
     from properties p
     left join (
       select property_id,
@@ -634,9 +650,16 @@ export async function listMyBookings(userId: string) {
     title: string;
     slug: string;
     city: string;
+    property_type: string;
+    adults: number;
+    children: number;
+    infants: number;
+    payment_status: string | null;
   }>`
     select b.id, b.status, b.check_in::text as check_in, b.check_out::text as check_out,
-           b.total_cents, b.currency, p.title, p.slug, p.city
+           b.total_cents, b.currency, p.title, p.slug, p.city, p.property_type,
+           b.adults, b.children, b.infants,
+           (select pay.status from payments pay where pay.booking_id = b.id order by pay.created_at desc limit 1) as payment_status
     from bookings b
     join properties p on p.id = b.property_id
     where b.customer_user_id = ${userId}
@@ -672,7 +695,17 @@ export async function listSavedStays(userId: string) {
            coalesce(
              (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' and m.is_cover order by m.sort_order limit 1),
              (select m.url from property_media m where m.property_id = p.id and m.kind = 'IMAGE' order by m.sort_order limit 1)
-           ) as cover_url
+           ) as cover_url,
+           (select count(*)::int from property_media m where m.property_id = p.id and m.kind = 'IMAGE') as photo_count,
+           (
+             select string_agg(s.url, '|' order by s.is_cover desc, s.sort_order asc)
+             from (
+               select url, is_cover, sort_order from property_media
+               where property_id = p.id and kind = 'IMAGE'
+               order by is_cover desc, sort_order asc
+               limit 8
+             ) s
+           ) as photo_urls
     from saved_properties s
     join properties p on p.id = s.property_id
     where s.user_id = ${userId}
@@ -711,11 +744,21 @@ export async function listOwnerBookings(userId: string) {
     check_out: string;
     total_cents: number;
     title: string;
+    slug: string;
+    property_type: string;
+    guest_name: string;
+    adults: number;
+    children: number;
+    infants: number;
+    payment_status: string | null;
   }>`
     select b.id, b.status, b.check_in::text as check_in, b.check_out::text as check_out,
-           b.total_cents, p.title
+           b.total_cents, p.title, p.slug, p.property_type, guest.display_name as guest_name,
+           b.adults, b.children, b.infants,
+           (select pay.status from payments pay where pay.booking_id = b.id order by pay.created_at desc limit 1) as payment_status
     from bookings b
     join properties p on p.id = b.property_id
+    join profiles guest on guest.user_id = b.customer_user_id
     where p.owner_user_id = ${profile.userId}
     order by b.check_in desc
   `;
@@ -881,6 +924,67 @@ export async function adminTables(userId: string) {
     select id, status, amount_cents, bank_reference from payouts order by created_at desc limit 50
   `;
   return { bookings, payments, payouts };
+}
+
+export async function searchAdminBookings(
+  userId: string,
+  input: { q: string; status: string; owner: string; property: string; from: string; to: string },
+) {
+  await requireActive(userId, ["ADMIN"]);
+  const sql = await getSql();
+  const where = ["true"];
+  const params: unknown[] = [];
+  const add = (value: unknown) => {
+    params.push(value);
+    return `$${params.length}`;
+  };
+  const statuses = ["PENDING", "CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED", "REFUNDED"];
+  if (statuses.includes(input.status)) where.push(`b.status = ${add(input.status)}`);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input.from)) where.push(`b.check_in >= ${add(input.from)}`);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input.to)) where.push(`b.check_out <= ${add(input.to)}`);
+  if (input.q.trim()) {
+    const token = add(`%${input.q.trim()}%`);
+    where.push(`(p.title ilike ${token} or guest.display_name ilike ${token} or owner.display_name ilike ${token})`);
+  }
+  if (input.owner.trim()) {
+    const token = add(`%${input.owner.trim()}%`);
+    where.push(`(owner.display_name ilike ${token} or owner.user_id ilike ${token})`);
+  }
+  if (input.property.trim()) {
+    const token = add(`%${input.property.trim()}%`);
+    where.push(`(p.title ilike ${token} or p.city ilike ${token})`);
+  }
+  return sql.query<{
+    id: string;
+    status: string;
+    check_in: string;
+    check_out: string;
+    adults: number;
+    children: number;
+    infants: number;
+    total_cents: number;
+    currency: string;
+    title: string;
+    slug: string;
+    property_type: string;
+    owner_name: string;
+    guest_name: string;
+    payment_status: string | null;
+  }>(
+    `select b.id, b.status, b.check_in::text as check_in, b.check_out::text as check_out,
+           b.adults, b.children, b.infants, b.total_cents, b.currency,
+           p.title, p.slug, p.property_type,
+           owner.display_name as owner_name, guest.display_name as guest_name,
+           (select pay.status from payments pay where pay.booking_id = b.id order by pay.created_at desc limit 1) as payment_status
+    from bookings b
+    join properties p on p.id = b.property_id
+    join profiles owner on owner.user_id = p.owner_user_id
+    join profiles guest on guest.user_id = b.customer_user_id
+    where ${where.join(" and ")}
+    order by b.created_at desc
+    limit 200`,
+    params,
+  );
 }
 
 

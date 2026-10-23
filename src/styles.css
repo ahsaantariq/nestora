@@ -68,3 +68,28 @@
     scroll-behavior: auto !important;
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    animation: rise 0.7s ease both;
+  }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.cms-body h1 { font-family: var(--font-display); font-size: 2.25rem; line-height: 1.15; margin: 1.25rem 0 0.5rem; }
+.cms-body h2 { font-family: var(--font-display); font-size: 1.75rem; line-height: 1.2; margin: 1.25rem 0 0.5rem; }
+.cms-body h3 { font-family: var(--font-display); font-size: 1.35rem; margin: 1rem 0 0.4rem; }
+.cms-body p { margin: 0.6rem 0; }
+.cms-body ul, .cms-body ol { margin: 0.6rem 0 0.6rem 1.25rem; }
+.cms-body ul { list-style: disc; }
+.cms-body ol { list-style: decimal; }
+.cms-body blockquote { border-left: 3px solid var(--color-primary); margin: 1rem 0; padding-left: 0.9rem; color: var(--color-muted); }
+.cms-body a { color: var(--color-primary); text-decoration: underline; }
+.cms-body img { max-width: 100%; border-radius: 12px; margin: 0.75rem 0; }
+.cms-body table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
+.cms-body th, .cms-body td { border: 1px solid var(--color-line); padding: 0.4rem 0.6rem; text-align: left; }
+.cms-body hr { border: 0; border-top: 1px solid var(--color-line); margin: 1.25rem 0; }

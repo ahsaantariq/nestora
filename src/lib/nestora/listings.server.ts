@@ -28,6 +28,7 @@ const draftSchema = z.object({
   maxPets: z.number().int().min(0).max(10),
   petFeeCents: z.number().int().min(0).max(50_000_000),
   instantBook: z.boolean(),
+  managementMode: z.enum(["OWNER", "NESTORA"]).default("OWNER"),
   nightlyCents: z.number().int().min(0).max(50_000_000),
   weekendCents: z.number().int().min(0).max(50_000_000).nullable(),
   weeklyDiscountBps: z.number().int().min(0).max(10_000),
@@ -182,6 +183,7 @@ export async function loadOwnListing(userId: string, propertyId: string): Promis
     maxPets: Number(row.max_pets),
     petFeeCents: Number(row.pet_fee_cents),
     instantBook: Boolean(row.instant_book),
+    managementMode: row.management_mode === "NESTORA" ? "NESTORA" : "OWNER",
     nightlyCents: Number(row.nightly_cents),
     weekendCents: row.weekend_cents == null ? null : Number(row.weekend_cents),
     weeklyDiscountBps: Number(row.weekly_discount_bps),
@@ -251,8 +253,8 @@ export async function saveListingDraft(userId: string, input: unknown) {
   if (draft.maxNights != null && draft.maxNights < draft.minNights) {
     throw new Error("Maximum stay cannot be shorter than the minimum.");
   }
-  const { sql, status } = await owned(userId, draft.id);
-  if (status === "PENDING_REVIEW") throw new Error("This listing is in review. Wait for a decision before editing.");
+  const { profile, status, sql } = await owned(userId, draft.id);
+  if (status === "PENDING_REVIEW" && profile.role !== "ADMIN") throw new Error("This listing is in review. Wait for a decision before editing.");
   const videoUrl = httpsOrNull(draft.videoUrl, "Video");
   const tourUrl = httpsOrNull(draft.tourUrl, "Virtual tour");
   const amenities = draft.amenities.filter((item) => amenitySet.has(item));
@@ -280,6 +282,7 @@ export async function saveListingDraft(userId: string, input: unknown) {
       max_pets = ${draft.maxPets},
       pet_fee_cents = ${draft.petFeeCents},
       instant_book = ${draft.instantBook},
+      management_mode = ${draft.managementMode},
       nightly_cents = ${draft.nightlyCents},
       weekend_cents = ${draft.weekendCents},
       weekly_discount_bps = ${draft.weeklyDiscountBps},
@@ -326,6 +329,19 @@ export async function saveListingDraft(userId: string, input: unknown) {
       values (${season.id}, ${draft.id}, ${season.label}, ${season.startsOn}, ${season.endsOn}, ${season.nightlyCents})
     `;
   }
+  if (profile.role === "ADMIN") {
+    const { writeAudit } = await import("./audit.server.ts");
+    await writeAudit(profile.userId, "listing.edit", draft.id, {
+      title: draft.title,
+      nightlyCents: draft.nightlyCents,
+      city: draft.city,
+      status,
+    });
+    await sql`
+      insert into listing_events (id, property_id, actor_user_id, action, note)
+      values (${randomUUID()}, ${draft.id}, ${profile.userId}, 'EDIT', ${`Saved ${draft.title}`})
+    `;
+  }
   return loadOwnListing(userId, draft.id);
 }
 
@@ -357,9 +373,13 @@ export async function submitListing(userId: string, propertyId: string) {
       template: "listing-submitted",
       title: `Listing to review: ${listing.title}`,
       body: `${listing.title} in ${listing.city} is waiting for a decision.`,
-      href: "/admin/listings",
+      href: `/admin/review/${propertyId}`,
     });
   }
+  await sql`
+    insert into listing_events (id, property_id, actor_user_id, action, note)
+    values (${randomUUID()}, ${propertyId}, ${userId}, 'SUBMIT', ${listing.title})
+  `;
   return loadOwnListing(userId, propertyId);
 }
 
@@ -445,6 +465,29 @@ export async function setCalendarDay(
     do update set price_cents = excluded.price_cents, blocked = excluded.blocked
   `;
   return { ok: true as const };
+}
+
+export async function loadListingReview(userId: string, propertyId: string) {
+  await requireActive(userId, ["ADMIN"]);
+  const listing = await loadOwnListing(userId, propertyId);
+  const sql = await getSql();
+  const owners = await sql<{ display_name: string; email: string; phone: string | null }>`
+    select pr.display_name, u.email, pr.phone
+    from properties p
+    join profiles pr on pr.user_id = p.owner_user_id
+    join "user" u on u.id = p.owner_user_id
+    where p.id = ${propertyId}
+  `;
+  const events = await sql<{ id: string; action: string; note: string; created_at: string; actor: string }>`
+    select e.id, e.action, e.note, e.created_at::text as created_at,
+           coalesce(pr.display_name, 'Nestora') as actor
+    from listing_events e
+    left join profiles pr on pr.user_id = e.actor_user_id
+    where e.property_id = ${propertyId}
+    order by e.created_at desc
+    limit 40
+  `;
+  return { listing, owner: owners[0] ?? null, events };
 }
 
 export async function listDestinations() {

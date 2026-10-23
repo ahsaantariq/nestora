@@ -10,8 +10,25 @@ export const Route = createFileRoute("/api/media/upload")({
         const session = await auth.api.getSession({ headers: request.headers });
         if (!session?.user?.id) return Response.json({ error: "Sign in to upload." }, { status: 401 });
         const form = await request.formData();
-        const propertyId = String(form.get("propertyId") ?? "");
+        const purpose = String(form.get("purpose") ?? "");
         const file = form.get("file");
+        if (purpose === "cms") {
+          if (!(file instanceof File)) return Response.json({ error: "Choose an image." }, { status: 400 });
+          try {
+            const { requireActive } = await import("@/lib/nestora/data.server");
+            await requireActive(session.user.id, ["ADMIN"]);
+            const kind = classifyUpload(file.type || "image/jpeg", file.name);
+            if (kind !== "IMAGE") return Response.json({ error: "Page images must be JPG, PNG, or WebP." }, { status: 400 });
+            assertUpload(kind, file.type || "image/jpeg", file.size);
+            const bytes = Buffer.from(await file.arrayBuffer());
+            const stored = await putObject({ bytes, mime: file.type || "image/jpeg", filename: file.name, kind });
+            return Response.json({ url: stored.url });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Upload failed.";
+            return Response.json({ error: message }, { status: 400 });
+          }
+        }
+        const propertyId = String(form.get("propertyId") ?? "");
         if (!propertyId || !(file instanceof File)) {
           return Response.json({ error: "Choose a file to upload." }, { status: 400 });
         }

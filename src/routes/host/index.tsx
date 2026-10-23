@@ -4,6 +4,7 @@ import { PROPERTY_TYPES } from "@/lib/nestora/constants";
 import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { claimVerificationFn, prepareSignupFn, publicFeesFn } from "@/lib/nestora/functions";
+import { loadPublicFaqsFn } from "@/lib/nestora/content.fns";
 import { formatBps, formatMoney } from "@/lib/domain/money";
 import { useProfile } from "@/components/profile-context";
 import { PublicFrame } from "@/components/site-chrome";
@@ -35,9 +36,13 @@ function HostLanding() {
   const [terms, setTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ delivered: boolean; fallbackUrl: string | null } | null>(null);
+  const [ownerFaqs, setOwnerFaqs] = useState<{ id: string; question: string; answer: string }[] | null>(null);
 
   useEffect(() => {
     publicFeesFn().then(setSettings).catch(() => setSettings(null));
+    loadPublicFaqsFn()
+      .then((rows) => setOwnerFaqs(rows.filter((row) => row.category === "OWNERS")))
+      .catch(() => setOwnerFaqs([]));
   }, []);
 
   if (!isPending && !loading && user && profile && (profile.role === "OWNER" || profile.role === "ADMIN") && !done) {
@@ -142,10 +147,26 @@ function HostLanding() {
           )}
         </div>
       </section>
+      <section className="mx-auto max-w-6xl px-4 pb-10">
+        <h2 className="font-display text-3xl">Why hosts list here</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {[
+            ["You set the price", "Nightly rate, cleaning, and discounts are yours. Guests see the total before they pay."],
+            ["Review before it is public", "A draft stays private until Nestora approves it. If we need a change, you get a note."],
+            ["The calendar stays yours", "Pause a live stay without deleting trips that are already booked."],
+          ].map(([title, body]) => (
+            <article key={title} className="rounded-card bg-surface p-5 shadow-soft">
+              <h3 className="font-display text-xl">{title}</h3>
+              <p className="mt-2 text-sm text-muted">{body}</p>
+            </article>
+          ))}
+        </div>
+        <p className="mt-4 text-sm"><Link to="/host-policy" className="font-medium text-primary">Read the host policy</Link></p>
+      </section>
       <section className="mx-auto max-w-6xl px-4 pb-16">
         <h2 className="font-display text-3xl">Questions</h2>
         <dl className="mt-6 grid gap-4 md:grid-cols-2">
-          {faqs.map(([question, answer]) => (
+          {(ownerFaqs && ownerFaqs.length > 0 ? ownerFaqs.map((item) => [item.question, item.answer] as const) : faqs).map(([question, answer]) => (
             <div key={question} className="border-t border-line pt-4">
               <dt className="font-medium">{question}</dt>
               <dd className="mt-2 text-sm text-muted">{answer}</dd>

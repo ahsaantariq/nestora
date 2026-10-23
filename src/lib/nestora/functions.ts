@@ -454,7 +454,7 @@ export const saveFees = createServerFn({ method: "POST" })
 export const reviewListing = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) =>
-    parseInput(z.object({ propertyId: z.string().min(1), decision: z.enum(["APPROVE", "REJECT"]), reason: z.string().max(500).default("") }), input),
+    parseInput(z.object({ propertyId: z.string().min(1), decision: z.enum(["APPROVE", "REJECT", "CHANGES"]), reason: z.string().max(500).default("") }), input),
   )
   .handler(async ({ context, data }) => {
     const { decideListing } = await import("./commerce.server.ts");
@@ -488,10 +488,8 @@ export const loadReviewListing = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => parseInput(z.object({ id: z.string().min(1) }), input))
   .handler(async ({ context, data }) => {
-    const { requireActive } = await import("./data.server.ts");
-    await requireActive(context.userId, ["ADMIN"]);
-    const { loadOwnListing } = await import("./listings.server.ts");
-    return loadOwnListing(context.userId, data.id);
+    const { loadListingReview } = await import("./listings.server.ts");
+    return loadListingReview(context.userId, data.id);
   });
 
 export const prepareSignupFn = createServerFn({ method: "POST" })

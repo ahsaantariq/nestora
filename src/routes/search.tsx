@@ -4,7 +4,7 @@ import { AMENITIES, PROPERTY_TYPES } from "@/lib/nestora/constants";
 import { parseCatalogSearch, type CatalogSearch } from "@/lib/nestora/catalog-search";
 import { searchCatalog } from "@/lib/nestora/functions";
 import type { StayCard } from "@/lib/nestora/data.server";
-import { formatMoney } from "@/lib/domain/money";
+import { StayCardView } from "@/components/stay-card";
 import { PublicFrame } from "@/components/site-chrome";
 import { SearchBar } from "@/components/search-bar";
 import { EmptyState, SelectInput, Skeleton, TextInput } from "@/components/ui";
@@ -222,32 +222,13 @@ function SearchPage() {
               />
             ) : null}
             <div className="space-y-3">
-              {stays?.map((stay) => (
-                <Link key={stay.id} to="/stay/$slug" params={{ slug: stay.slug }} className="flex gap-4 rounded-card bg-surface p-4 shadow-soft">
-                  {stay.coverUrl ? <img src={stay.coverUrl} alt="" className="h-24 w-32 shrink-0 rounded-[10px] object-cover" /> : <div className="h-24 w-32 shrink-0 rounded-[10px] bg-primary/10" />}
-                  <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-primary">{labelFor(stay.propertyType)}</p>
-                      <h2 className="mt-1 font-display text-2xl">{stay.title}</h2>
-                      <p className="mt-1 text-sm text-muted">{[stay.city, stay.region].filter(Boolean).join(", ") || "Location on request"}</p>
-                    </div>
-                    <p className="text-sm font-medium tabular-nums">{formatMoney(stay.nightlyCents)}</p>
-                  </div>
-                  {stay.summary ? <p className="mt-3 text-sm text-muted">{stay.summary}</p> : null}
-                  </div>
-                </Link>
-              ))}
+              {stays?.map((stay) => <StayCardView key={stay.id} stay={stay} layout="row" />)}
             </div>
           </div>
         </div>
       </div>
     </PublicFrame>
   );
-}
-
-function labelFor(type: string) {
-  return PROPERTY_TYPES.find((item) => item.id === type)?.label ?? type;
 }
 
 function MapSplit({ stays }: { stays: { title: string; city: string; lat: number | null; lng: number | null }[] }) {

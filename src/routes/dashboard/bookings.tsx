@@ -43,8 +43,9 @@ function BookingsPage() {
           <li key={row.id} className="rounded-card bg-surface p-4 shadow-soft">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <Link to="/stay/$slug" params={{ slug: row.slug }} className="font-medium">{row.title}</Link>
-                <p className="text-sm text-muted">{row.check_in} → {row.check_out} · {row.city}</p>
+                <Link to="/stay/$slug" params={{ slug: row.slug }} className="font-medium hover:text-primary">{row.title}</Link>
+                <p className="text-sm text-muted">{row.property_type.toLowerCase()} · {row.check_in} → {row.check_out} · {row.city}</p>
+                <p className="mt-1 text-sm text-muted">{row.adults + row.children + row.infants} guests · {row.payment_status ? `Payment ${row.payment_status.toLowerCase()}` : "Payment not started"}</p>
               </div>
               <StatusPill>{row.status.toLowerCase()}</StatusPill>
             </div>
