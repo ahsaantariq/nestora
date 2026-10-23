@@ -50,7 +50,16 @@ export async function smtpConfigured(): Promise<boolean> {
   return Boolean(await resolveSmtp());
 }
 
-async function deliver(config: SmtpConfig, input: { to: string; subject: string; text: string }) {
+async function deliver(
+  config: SmtpConfig,
+  input: {
+    to: string;
+    subject: string;
+    text: string;
+    attachments?: { filename: string; content: Buffer; contentType: string }[];
+    headers?: Record<string, string>;
+  },
+) {
   const transport = nodemailer.createTransport({
     host: config.host,
     port: config.port,
@@ -63,10 +72,19 @@ async function deliver(config: SmtpConfig, input: { to: string; subject: string;
     to: input.to,
     subject: input.subject,
     text: input.text,
+    attachments: input.attachments,
+    headers: input.headers,
   });
 }
 
-export async function sendMail(input: { to: string; template: string; subject: string; text: string }) {
+export async function sendMail(input: {
+  to: string;
+  template: string;
+  subject: string;
+  text: string;
+  attachments?: { filename: string; contentBase64: string; contentType: string }[];
+  headers?: Record<string, string>;
+}) {
   const sql = await getSql();
   const id = randomUUID();
   await sql`
@@ -77,7 +95,7 @@ export async function sendMail(input: { to: string; template: string; subject: s
       ${input.template},
       ${input.subject},
       ${input.text},
-      ${JSON.stringify({ subject: input.subject })}::jsonb,
+      ${JSON.stringify({ subject: input.subject, attachments: input.attachments ?? [], headers: input.headers ?? {} })}::jsonb,
       'QUEUED',
       0,
       now()
@@ -90,8 +108,8 @@ export async function sendMail(input: { to: string; template: string; subject: s
 export async function drainEmailQueue() {
   const sql = await getSql();
   const config = await resolveSmtp();
-  const rows = await sql<{ id: string; to_address: string; subject: string; body: string; attempts: number }>`
-    select id, to_address, subject, body, attempts
+  const rows = await sql<{ id: string; to_address: string; subject: string; body: string; attempts: number; payload: unknown }>`
+    select id, to_address, subject, body, attempts, payload
     from email_log
     where status in ('QUEUED', 'FAILED')
       and attempts < 5
@@ -110,7 +128,21 @@ export async function drainEmailQueue() {
       continue;
     }
     try {
-      await deliver(config, { to: row.to_address, subject: row.subject || "Nestora", text: row.body || "" });
+      const payload = (row.payload && typeof row.payload === "object" ? row.payload : {}) as {
+        attachments?: { filename: string; contentBase64: string; contentType: string }[];
+        headers?: Record<string, string>;
+      };
+      await deliver(config, {
+        to: row.to_address,
+        subject: row.subject || "Nestora",
+        text: row.body || "",
+        headers: payload.headers,
+        attachments: (payload.attachments ?? []).map((file) => ({
+          filename: file.filename,
+          content: Buffer.from(file.contentBase64, "base64"),
+          contentType: file.contentType,
+        })),
+      });
       await sql`
         update email_log
         set status = 'SENT', attempts = attempts + 1, error = null, sent_at = now()

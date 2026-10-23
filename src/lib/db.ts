@@ -263,8 +263,9 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
  *   A failed connection is remembered for `/api/health` and does not crash the process.
  */
 export function ensureDbReady(): Promise<void> {
-  if (dbSource === "pglite") return getSql().then(() => undefined);
-  return ensurePostgresReady();
+  const ready = dbSource === "pglite" ? getSql().then(() => undefined) : ensurePostgresReady();
+  void ready.then(() => import("./nestora/assistant/queue.server.ts").then((mod) => mod.ensureQueue()).catch(() => undefined));
+  return ready;
 }
 
 function bundledMigrationFiles(): { name: string; sql: string }[] {

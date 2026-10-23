@@ -408,6 +408,24 @@ export async function ingestStripeEvent(eventId: string, type: string, payload: 
     const bookingId = object?.metadata?.booking_id;
     if (bookingId && object?.id) await markBookingPaid(bookingId, object.id);
   }
+  if (type === "checkout.session.completed") {
+    const object = (payload as { data?: { object?: { payment_status?: string; payment_intent?: string; metadata?: { booking_id?: string } } } }).data?.object;
+    const bookingId = object?.metadata?.booking_id;
+    if (object?.payment_status === "paid" && bookingId) {
+      await markBookingPaid(bookingId, object.payment_intent || `checkout-${bookingId}`);
+    }
+  }
+  const paidId = type === "payment_intent.succeeded"
+    ? (payload as { data?: { object?: { metadata?: { booking_id?: string } } } }).data?.object?.metadata?.booking_id
+    : type === "checkout.session.completed"
+      ? (payload as { data?: { object?: { payment_status?: string; metadata?: { booking_id?: string } } } }).data?.object?.payment_status === "paid"
+        ? (payload as { data?: { object?: { metadata?: { booking_id?: string } } } }).data?.object?.metadata?.booking_id
+        : undefined
+      : undefined;
+  if (paidId) {
+    const { confirmAssistantBooking } = await import("./assistant/confirm.server.ts");
+    await confirmAssistantBooking(paidId);
+  }
   if (type === "charge.refunded" || type === "refund.failed" || type === "refund.updated") {
     const object = (payload as { data?: { object?: { id?: string; status?: string; payment_intent?: string; failure_reason?: string } } }).data?.object;
     if (object?.id) {

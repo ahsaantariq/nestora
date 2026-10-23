@@ -6,6 +6,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { TAGLINE } from "@/lib/nestora/constants";
 import { loadPublicChromeFn } from "@/lib/nestora/content.fns";
 import { useProfile } from "@/components/profile-context";
+import { ChatWidget } from "@/components/chat-widget";
 import { Skeleton } from "@/components/ui";
 
 type NavLink = { id: string; placement: string; column_name: string; label: string; href: string };
@@ -172,6 +173,7 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <SiteFooter />
+      <ChatWidget />
     </div>
   );
 }

@@ -9,6 +9,8 @@ export const Route = createFileRoute("/admin")({
         nav={
           <>
             <DeskLink to="/admin" exact>Overview</DeskLink>
+            <DeskLink to="/admin/conversations">Conversations</DeskLink>
+            <DeskLink to="/admin/calls">Calls</DeskLink>
             <DeskLink to="/admin/listings">Listing review</DeskLink>
             <DeskLink to="/admin/pages">Pages</DeskLink>
             <DeskLink to="/admin/faqs">FAQs</DeskLink>

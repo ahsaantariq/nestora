@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { loadIntegrationsFn, saveIntegrationsFn, sendTestEmailFn, testStripeFn } from "@/lib/nestora/functions";
 import { PageIntro } from "@/components/workspace";
+import { AssistantIntegrations } from "@/components/assistant-integrations";
 import { AsyncForm, SelectField, TextField, ToggleField } from "@/components/forms";
 import { Button, EmptyState, Skeleton } from "@/components/ui";
 
@@ -32,6 +33,7 @@ function IntegrationsPage() {
       {error ? <p className="mb-3 text-sm text-danger">{error}</p> : null}
       {notice ? <p className="mb-3 text-sm text-primary">{notice}</p> : null}
       <IntegrationForm initial={data} onSaved={setData} onError={setError} onNotice={setNotice} />
+      <AssistantIntegrations />
     </>
   );
 }

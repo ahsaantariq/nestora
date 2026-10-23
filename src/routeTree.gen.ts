@@ -32,9 +32,12 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminBookingsRouteImport } from './routes/admin/bookings'
+import { Route as AdminCallsRouteImport } from './routes/admin/calls'
+import { Route as AdminConversationsRouteImport } from './routes/admin/conversations'
 import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
 import { Route as AdminEmailRouteImport } from './routes/admin/email'
 import { Route as AdminFaqsRouteImport } from './routes/admin/faqs'
@@ -75,9 +78,18 @@ import { Route as TripsBookingIdRouteImport } from './routes/trips/$bookingId'
 import { Route as AdminPagesIndexRouteImport } from './routes/admin/pages/index'
 import { Route as AdminPagesPageIdRouteImport } from './routes/admin/pages/$pageId'
 import { Route as AdminReviewPropertyIdRouteImport } from './routes/admin/review/$propertyId'
+import { Route as ApiAssistantEventsRouteImport } from './routes/api/assistant/events'
+import { Route as ApiAssistantVoiceTurnRouteImport } from './routes/api/assistant/voice-turn'
+import { Route as ApiAssistantWorkerRouteImport } from './routes/api/assistant/worker'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiMediaUploadRouteImport } from './routes/api/media/upload'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as ApiTwilioSmsRouteImport } from './routes/api/twilio/sms'
+import { Route as ApiTwilioVoiceAnswerRouteImport } from './routes/api/twilio/voice-answer'
+import { Route as ApiTwilioVoiceHandoffRouteImport } from './routes/api/twilio/voice-handoff'
+import { Route as ApiTwilioVoiceStatusRouteImport } from './routes/api/twilio/voice-status'
+import { Route as ApiTwilioWhatsappRouteImport } from './routes/api/twilio/whatsapp'
+import { Route as ApiZernioWebhookRouteImport } from './routes/api/zernio/webhook'
 import { Route as HostDashboardIndexRouteImport } from './routes/host/dashboard/index'
 import { Route as HostDashboardBookingsRouteImport } from './routes/host/dashboard/bookings'
 import { Route as HostDashboardCalendarRouteImport } from './routes/host/dashboard/calendar'
@@ -206,6 +218,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -219,6 +236,16 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
 const AdminBookingsRoute = AdminBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminCallsRoute = AdminCallsRouteImport.update({
+  id: '/calls',
+  path: '/calls',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminConversationsRoute = AdminConversationsRouteImport.update({
+  id: '/conversations',
+  path: '/conversations',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
@@ -421,6 +448,21 @@ const AdminReviewPropertyIdRoute = AdminReviewPropertyIdRouteImport.update({
   path: '/review/$propertyId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiAssistantEventsRoute = ApiAssistantEventsRouteImport.update({
+  id: '/api/assistant/events',
+  path: '/api/assistant/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAssistantVoiceTurnRoute = ApiAssistantVoiceTurnRouteImport.update({
+  id: '/api/assistant/voice-turn',
+  path: '/api/assistant/voice-turn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAssistantWorkerRoute = ApiAssistantWorkerRouteImport.update({
+  id: '/api/assistant/worker',
+  path: '/api/assistant/worker',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -434,6 +476,36 @@ const ApiMediaUploadRoute = ApiMediaUploadRouteImport.update({
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioSmsRoute = ApiTwilioSmsRouteImport.update({
+  id: '/api/twilio/sms',
+  path: '/api/twilio/sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioVoiceAnswerRoute = ApiTwilioVoiceAnswerRouteImport.update({
+  id: '/api/twilio/voice-answer',
+  path: '/api/twilio/voice-answer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioVoiceHandoffRoute = ApiTwilioVoiceHandoffRouteImport.update({
+  id: '/api/twilio/voice-handoff',
+  path: '/api/twilio/voice-handoff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioVoiceStatusRoute = ApiTwilioVoiceStatusRouteImport.update({
+  id: '/api/twilio/voice-status',
+  path: '/api/twilio/voice-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTwilioWhatsappRoute = ApiTwilioWhatsappRouteImport.update({
+  id: '/api/twilio/whatsapp',
+  path: '/api/twilio/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiZernioWebhookRoute = ApiZernioWebhookRouteImport.update({
+  id: '/api/zernio/webhook',
+  path: '/api/zernio/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HostDashboardIndexRoute = HostDashboardIndexRouteImport.update({
@@ -522,9 +594,12 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
   '/terms': typeof TermsRoute
+  '/welcome': typeof WelcomeRoute
   '/host/dashboard': typeof HostDashboardRouteRouteWithChildren
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calls': typeof AdminCallsRoute
+  '/admin/conversations': typeof AdminConversationsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/email': typeof AdminEmailRoute
   '/admin/faqs': typeof AdminFaqsRoute
@@ -564,9 +639,18 @@ export interface FileRoutesByFullPath {
   '/host/': typeof HostIndexRoute
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
   '/admin/review/$propertyId': typeof AdminReviewPropertyIdRoute
+  '/api/assistant/events': typeof ApiAssistantEventsRoute
+  '/api/assistant/voice-turn': typeof ApiAssistantVoiceTurnRoute
+  '/api/assistant/worker': typeof ApiAssistantWorkerRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/twilio/sms': typeof ApiTwilioSmsRoute
+  '/api/twilio/voice-answer': typeof ApiTwilioVoiceAnswerRoute
+  '/api/twilio/voice-handoff': typeof ApiTwilioVoiceHandoffRoute
+  '/api/twilio/voice-status': typeof ApiTwilioVoiceStatusRoute
+  '/api/twilio/whatsapp': typeof ApiTwilioWhatsappRoute
+  '/api/zernio/webhook': typeof ApiZernioWebhookRoute
   '/host/dashboard/bookings': typeof HostDashboardBookingsRoute
   '/host/dashboard/calendar': typeof HostDashboardCalendarRoute
   '/host/dashboard/fees': typeof HostDashboardFeesRoute
@@ -602,8 +686,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
   '/terms': typeof TermsRoute
+  '/welcome': typeof WelcomeRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calls': typeof AdminCallsRoute
+  '/admin/conversations': typeof AdminConversationsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/email': typeof AdminEmailRoute
   '/admin/faqs': typeof AdminFaqsRoute
@@ -643,9 +730,18 @@ export interface FileRoutesByTo {
   '/host': typeof HostIndexRoute
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
   '/admin/review/$propertyId': typeof AdminReviewPropertyIdRoute
+  '/api/assistant/events': typeof ApiAssistantEventsRoute
+  '/api/assistant/voice-turn': typeof ApiAssistantVoiceTurnRoute
+  '/api/assistant/worker': typeof ApiAssistantWorkerRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/twilio/sms': typeof ApiTwilioSmsRoute
+  '/api/twilio/voice-answer': typeof ApiTwilioVoiceAnswerRoute
+  '/api/twilio/voice-handoff': typeof ApiTwilioVoiceHandoffRoute
+  '/api/twilio/voice-status': typeof ApiTwilioVoiceStatusRoute
+  '/api/twilio/whatsapp': typeof ApiTwilioWhatsappRoute
+  '/api/zernio/webhook': typeof ApiZernioWebhookRoute
   '/host/dashboard/bookings': typeof HostDashboardBookingsRoute
   '/host/dashboard/calendar': typeof HostDashboardCalendarRoute
   '/host/dashboard/fees': typeof HostDashboardFeesRoute
@@ -685,9 +781,12 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status': typeof StatusRoute
   '/terms': typeof TermsRoute
+  '/welcome': typeof WelcomeRoute
   '/host/dashboard': typeof HostDashboardRouteRouteWithChildren
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calls': typeof AdminCallsRoute
+  '/admin/conversations': typeof AdminConversationsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/email': typeof AdminEmailRoute
   '/admin/faqs': typeof AdminFaqsRoute
@@ -727,9 +826,18 @@ export interface FileRoutesById {
   '/host/': typeof HostIndexRoute
   '/admin/pages/$pageId': typeof AdminPagesPageIdRoute
   '/admin/review/$propertyId': typeof AdminReviewPropertyIdRoute
+  '/api/assistant/events': typeof ApiAssistantEventsRoute
+  '/api/assistant/voice-turn': typeof ApiAssistantVoiceTurnRoute
+  '/api/assistant/worker': typeof ApiAssistantWorkerRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/twilio/sms': typeof ApiTwilioSmsRoute
+  '/api/twilio/voice-answer': typeof ApiTwilioVoiceAnswerRoute
+  '/api/twilio/voice-handoff': typeof ApiTwilioVoiceHandoffRoute
+  '/api/twilio/voice-status': typeof ApiTwilioVoiceStatusRoute
+  '/api/twilio/whatsapp': typeof ApiTwilioWhatsappRoute
+  '/api/zernio/webhook': typeof ApiZernioWebhookRoute
   '/host/dashboard/bookings': typeof HostDashboardBookingsRoute
   '/host/dashboard/calendar': typeof HostDashboardCalendarRoute
   '/host/dashboard/fees': typeof HostDashboardFeesRoute
@@ -770,9 +878,12 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/status'
     | '/terms'
+    | '/welcome'
     | '/host/dashboard'
     | '/admin/audit'
     | '/admin/bookings'
+    | '/admin/calls'
+    | '/admin/conversations'
     | '/admin/customers'
     | '/admin/email'
     | '/admin/faqs'
@@ -812,9 +923,18 @@ export interface FileRouteTypes {
     | '/host/'
     | '/admin/pages/$pageId'
     | '/admin/review/$propertyId'
+    | '/api/assistant/events'
+    | '/api/assistant/voice-turn'
+    | '/api/assistant/worker'
     | '/api/auth/$'
     | '/api/media/upload'
     | '/api/stripe/webhook'
+    | '/api/twilio/sms'
+    | '/api/twilio/voice-answer'
+    | '/api/twilio/voice-handoff'
+    | '/api/twilio/voice-status'
+    | '/api/twilio/whatsapp'
+    | '/api/zernio/webhook'
     | '/host/dashboard/bookings'
     | '/host/dashboard/calendar'
     | '/host/dashboard/fees'
@@ -850,8 +970,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/status'
     | '/terms'
+    | '/welcome'
     | '/admin/audit'
     | '/admin/bookings'
+    | '/admin/calls'
+    | '/admin/conversations'
     | '/admin/customers'
     | '/admin/email'
     | '/admin/faqs'
@@ -891,9 +1014,18 @@ export interface FileRouteTypes {
     | '/host'
     | '/admin/pages/$pageId'
     | '/admin/review/$propertyId'
+    | '/api/assistant/events'
+    | '/api/assistant/voice-turn'
+    | '/api/assistant/worker'
     | '/api/auth/$'
     | '/api/media/upload'
     | '/api/stripe/webhook'
+    | '/api/twilio/sms'
+    | '/api/twilio/voice-answer'
+    | '/api/twilio/voice-handoff'
+    | '/api/twilio/voice-status'
+    | '/api/twilio/whatsapp'
+    | '/api/zernio/webhook'
     | '/host/dashboard/bookings'
     | '/host/dashboard/calendar'
     | '/host/dashboard/fees'
@@ -932,9 +1064,12 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/status'
     | '/terms'
+    | '/welcome'
     | '/host/dashboard'
     | '/admin/audit'
     | '/admin/bookings'
+    | '/admin/calls'
+    | '/admin/conversations'
     | '/admin/customers'
     | '/admin/email'
     | '/admin/faqs'
@@ -974,9 +1109,18 @@ export interface FileRouteTypes {
     | '/host/'
     | '/admin/pages/$pageId'
     | '/admin/review/$propertyId'
+    | '/api/assistant/events'
+    | '/api/assistant/voice-turn'
+    | '/api/assistant/worker'
     | '/api/auth/$'
     | '/api/media/upload'
     | '/api/stripe/webhook'
+    | '/api/twilio/sms'
+    | '/api/twilio/voice-answer'
+    | '/api/twilio/voice-handoff'
+    | '/api/twilio/voice-status'
+    | '/api/twilio/whatsapp'
+    | '/api/zernio/webhook'
     | '/host/dashboard/bookings'
     | '/host/dashboard/calendar'
     | '/host/dashboard/fees'
@@ -1016,14 +1160,24 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatusRoute: typeof StatusRoute
   TermsRoute: typeof TermsRoute
+  WelcomeRoute: typeof WelcomeRoute
   ApiHealthRoute: typeof ApiHealthRoute
   CheckoutBookingIdRoute: typeof CheckoutBookingIdRoute
   PSlugRoute: typeof PSlugRoute
   StaySlugRoute: typeof StaySlugRoute
   TripsBookingIdRoute: typeof TripsBookingIdRoute
+  ApiAssistantEventsRoute: typeof ApiAssistantEventsRoute
+  ApiAssistantVoiceTurnRoute: typeof ApiAssistantVoiceTurnRoute
+  ApiAssistantWorkerRoute: typeof ApiAssistantWorkerRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMediaUploadRoute: typeof ApiMediaUploadRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiTwilioSmsRoute: typeof ApiTwilioSmsRoute
+  ApiTwilioVoiceAnswerRoute: typeof ApiTwilioVoiceAnswerRoute
+  ApiTwilioVoiceHandoffRoute: typeof ApiTwilioVoiceHandoffRoute
+  ApiTwilioVoiceStatusRoute: typeof ApiTwilioVoiceStatusRoute
+  ApiTwilioWhatsappRoute: typeof ApiTwilioWhatsappRoute
+  ApiZernioWebhookRoute: typeof ApiZernioWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1189,6 +1343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -1208,6 +1369,20 @@ declare module '@tanstack/react-router' {
       path: '/bookings'
       fullPath: '/admin/bookings'
       preLoaderRoute: typeof AdminBookingsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/calls': {
+      id: '/admin/calls'
+      path: '/calls'
+      fullPath: '/admin/calls'
+      preLoaderRoute: typeof AdminCallsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/conversations': {
+      id: '/admin/conversations'
+      path: '/conversations'
+      fullPath: '/admin/conversations'
+      preLoaderRoute: typeof AdminConversationsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/customers': {
@@ -1490,6 +1665,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReviewPropertyIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/assistant/events': {
+      id: '/api/assistant/events'
+      path: '/api/assistant/events'
+      fullPath: '/api/assistant/events'
+      preLoaderRoute: typeof ApiAssistantEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/assistant/voice-turn': {
+      id: '/api/assistant/voice-turn'
+      path: '/api/assistant/voice-turn'
+      fullPath: '/api/assistant/voice-turn'
+      preLoaderRoute: typeof ApiAssistantVoiceTurnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/assistant/worker': {
+      id: '/api/assistant/worker'
+      path: '/api/assistant/worker'
+      fullPath: '/api/assistant/worker'
+      preLoaderRoute: typeof ApiAssistantWorkerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -1509,6 +1705,48 @@ declare module '@tanstack/react-router' {
       path: '/api/stripe/webhook'
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio/sms': {
+      id: '/api/twilio/sms'
+      path: '/api/twilio/sms'
+      fullPath: '/api/twilio/sms'
+      preLoaderRoute: typeof ApiTwilioSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio/voice-answer': {
+      id: '/api/twilio/voice-answer'
+      path: '/api/twilio/voice-answer'
+      fullPath: '/api/twilio/voice-answer'
+      preLoaderRoute: typeof ApiTwilioVoiceAnswerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio/voice-handoff': {
+      id: '/api/twilio/voice-handoff'
+      path: '/api/twilio/voice-handoff'
+      fullPath: '/api/twilio/voice-handoff'
+      preLoaderRoute: typeof ApiTwilioVoiceHandoffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio/voice-status': {
+      id: '/api/twilio/voice-status'
+      path: '/api/twilio/voice-status'
+      fullPath: '/api/twilio/voice-status'
+      preLoaderRoute: typeof ApiTwilioVoiceStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/twilio/whatsapp': {
+      id: '/api/twilio/whatsapp'
+      path: '/api/twilio/whatsapp'
+      fullPath: '/api/twilio/whatsapp'
+      preLoaderRoute: typeof ApiTwilioWhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/zernio/webhook': {
+      id: '/api/zernio/webhook'
+      path: '/api/zernio/webhook'
+      fullPath: '/api/zernio/webhook'
+      preLoaderRoute: typeof ApiZernioWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/host/dashboard/': {
@@ -1601,6 +1839,8 @@ declare module '@tanstack/react-router' {
 interface AdminRouteRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminCallsRoute: typeof AdminCallsRoute
+  AdminConversationsRoute: typeof AdminConversationsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminEmailRoute: typeof AdminEmailRoute
   AdminFaqsRoute: typeof AdminFaqsRoute
@@ -1625,6 +1865,8 @@ interface AdminRouteRouteChildren {
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminBookingsRoute: AdminBookingsRoute,
+  AdminCallsRoute: AdminCallsRoute,
+  AdminConversationsRoute: AdminConversationsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminEmailRoute: AdminEmailRoute,
   AdminFaqsRoute: AdminFaqsRoute,
@@ -1761,14 +2003,24 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatusRoute: StatusRoute,
   TermsRoute: TermsRoute,
+  WelcomeRoute: WelcomeRoute,
   ApiHealthRoute: ApiHealthRoute,
   CheckoutBookingIdRoute: CheckoutBookingIdRoute,
   PSlugRoute: PSlugRoute,
   StaySlugRoute: StaySlugRoute,
   TripsBookingIdRoute: TripsBookingIdRoute,
+  ApiAssistantEventsRoute: ApiAssistantEventsRoute,
+  ApiAssistantVoiceTurnRoute: ApiAssistantVoiceTurnRoute,
+  ApiAssistantWorkerRoute: ApiAssistantWorkerRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMediaUploadRoute: ApiMediaUploadRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiTwilioSmsRoute: ApiTwilioSmsRoute,
+  ApiTwilioVoiceAnswerRoute: ApiTwilioVoiceAnswerRoute,
+  ApiTwilioVoiceHandoffRoute: ApiTwilioVoiceHandoffRoute,
+  ApiTwilioVoiceStatusRoute: ApiTwilioVoiceStatusRoute,
+  ApiTwilioWhatsappRoute: ApiTwilioWhatsappRoute,
+  ApiZernioWebhookRoute: ApiZernioWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
